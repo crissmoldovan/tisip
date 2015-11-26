@@ -234,7 +234,21 @@ dependencies: \
   /Users/criss/work/tisip/iphone/pjsip/src/pjsip/include/pjsip/sip_endpoint.h \
   /Users/criss/work/tisip/iphone/Classes/Util.h \
   /Users/criss/work/tisip/iphone/Classes/PJUtil.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiApp.h \
   /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiHost.h \
   /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/Bridge.h \
   /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiStylesheet.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/KrollBridge.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/XHRBridge.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiRootViewController.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiControllerProtocols.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiViewProxy.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiUIView.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiAnimation.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiPoint.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/ListenerEntry.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/LayoutConstraint.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiGradient.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiRect.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiViewTemplate.h \
   /Users/criss/work/tisip/iphone/Classes/PjSIPNotifications.h

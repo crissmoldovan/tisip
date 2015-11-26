@@ -7,8 +7,9 @@
 
 #import "TiModule.h"
 #import "PjSIPProxy.h"
+#import <PushKit/PushKit.h>
 
-@interface ComCrissmoldovanTisipModule : TiModule
+@interface ComCrissmoldovanTisipModule : TiModule <PKPushRegistryDelegate>
 {
     
 }

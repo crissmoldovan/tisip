@@ -5,6 +5,12 @@
 		configuration in <iphone>, <android>, and <mobileweb> sections
 	-->
 	<iphone>
+		<key>UIBackgroundModes</key>
+		<array>
+		  <string>audio</string>
+		  <string>voip</string>
+		  <string>remote-notification</string>
+		</array>
 	</iphone>
 	<android xmlns:android="http://schemas.android.com/apk/res/android">
 	</android>

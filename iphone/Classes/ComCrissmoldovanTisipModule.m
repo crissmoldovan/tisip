@@ -6,6 +6,7 @@
  */
 
 #import "ComCrissmoldovanTisipModule.h"
+#import "TiApp.h"
 #import "TiBase.h"
 #import "TiHost.h"
 #import "TiUtils.h"
@@ -13,6 +14,7 @@
 #import "PjSIPNotifications.h"
 #import "PJSIP.h"
 #import "PJUtil.h"
+//#import "VoipPush.h"
 
 @implementation ComCrissmoldovanTisipModule
 
@@ -84,7 +86,6 @@ PjSIPProxy *pjproxy;
                selector:@selector(didReceiveMessageStatusUpdate:)
                    name:PJSIPPagerUpdateNotification
                  object:[PjSIPDispatch class]];
-
     
 	NSLog(@"[INFO] %@ loaded",[self moduleId]);
 }
@@ -308,6 +309,74 @@ PjSIPProxy *pjproxy;
                                  to, @"to", nil];
     [self fireEvent:eventName withObject:eventObject];
 }
+- (void)pushRegistry:(PKPushRegistry *)registry didUpdatePushCredentials:(PKPushCredentials *)credentials forType:(NSString *)type{
+    if([credentials.token length] == 0) {
+        NSLog(@"voip token NULL");
+        NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+                                     [NSString stringWithFormat:@"emptytoken"],@"status", nil];
+        [self fireEvent:@"PUSH.REGISTER.FAILED" withObject:eventObject];
+        return;
+    }
+    
+    NSString* token = [[[NSString stringWithFormat:@"%@",credentials.token]
+                        stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]] stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSLog(@"VoipProxy token: %@", token);
+    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+                                [NSString stringWithString:token],@"token", nil];
+    [self fireEvent:@"PUSH.REGISTER.SUCCESS" withObject:eventObject];
+}
+
+- (void)pushRegistry:(PKPushRegistry *)registry didReceiveIncomingPushWithPayload:(PKPushPayload *)payload forType:(NSString *)type
+{
+//    NSLog(@"didReceiveIncomingPushWithPayload");
+//    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+//                                [NSDictionary dictionaryWithDictionary:payload.dictionaryPayload],@"data", nil];
+//   [self fireEvent:@"PUSH.RECEIVED" withObject:eventObject];
+
+    NSLog(@"checking if app booted %@", [[TiApp app] appBooted] ? @"YES" : @"NO");
+    
+    [[UIApplication sharedApplication] cancelAllLocalNotifications];
+    
+    NSDictionary *payloadData = [NSDictionary dictionaryWithDictionary:payload.dictionaryPayload];
+    NSLog(@"received type: %@", [payloadData valueForKey:@"evt_type"])
+    
+    UILocalNotification* localNotification = [[UILocalNotification alloc] init];
+    localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:0];
+    localNotification.alertBody = [payloadData valueForKey:@"message"];
+    localNotification.timeZone = [NSTimeZone defaultTimeZone];
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+    
+    NSLog(@"IncomingPushWithPayload");
+}
+
+//- (void) didReceiveVoipRegisterSuccess:(NSNotification *) notif{
+//    NSString *eventName = @"PUSH.REGISTER.SUCCESS";
+//    NSString *token = [[notif userInfo] objectForKey:@"token"];
+//    
+//    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+//                                 [NSString stringWithString:token],@"token", nil];
+//    [self fireEvent:eventName withObject:eventObject];
+//}
+//
+//- (void) didReceiveVoipRegisterFailed:(NSNotification *) notif{
+//    NSString *eventName = @"PUSH.REGISTER.FAILED";
+//    NSString *status = [[notif userInfo] objectForKey:@"status"];
+//    
+//    NSLog(@" PUSH REG FAIL t: %@", status);
+//    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+//                                 [NSString stringWithString:status],@"status", nil];
+//    [self fireEvent:eventName withObject:eventObject];
+//}
+//
+//- (void) didReceiveVoipPush:(NSNotification *) notif{
+//    NSString *eventName = @"PUSH.RECEIVED";
+//    NSDictionary *payload = [[notif userInfo] objectForKey:@"data"];
+//    
+//    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+//                                 [NSDictionary dictionaryWithDictionary:payload],@"data", nil];
+//    [self fireEvent:eventName withObject:eventObject];
+//}
+
 
 #pragma Public APIs
 
@@ -328,6 +397,14 @@ PjSIPProxy *pjproxy;
     
     NSLog(@"registered: %@", accountId);
     return accountId;
+}
+
+-(void)registerForVoipPush:(id)args{
+//    [[VoipPush sharedProxy] register];
+    
+    PKPushRegistry *pushRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
+    pushRegistry.delegate = self;
+    pushRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 }
 
 -(id)unregister:(id)args{

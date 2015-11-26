@@ -26,35 +26,38 @@
 		24DD6CFA1134B3F500162E58 /* ComCrissmoldovanTisipModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 24DD6CF81134B3F500162E58 /* ComCrissmoldovanTisipModule.m */; };
 		24DE9E1111C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.h in Headers */ = {isa = PBXBuildFile; fileRef = 24DE9E0F11C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.h */; };
 		24DE9E1211C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.m in Sources */ = {isa = PBXBuildFile; fileRef = 24DE9E1011C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.m */; };
-		2876058F1BDB0DD300C86BDB /* PJUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = 2876058C1BDB0DD300C86BDB /* PJUtil.h */; settings = {ASSET_TAGS = (); }; };
-		287605901BDB0DD300C86BDB /* PJUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 2876058D1BDB0DD300C86BDB /* PJUtil.m */; settings = {ASSET_TAGS = (); }; };
-		287605911BDB0DD300C86BDB /* Util.h in Headers */ = {isa = PBXBuildFile; fileRef = 2876058E1BDB0DD300C86BDB /* Util.h */; settings = {ASSET_TAGS = (); }; };
-		287605991BDB0DF600C86BDB /* PJSIP.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605921BDB0DF600C86BDB /* PJSIP.h */; settings = {ASSET_TAGS = (); }; };
-		2876059A1BDB0DF600C86BDB /* PjSIPDispatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605931BDB0DF600C86BDB /* PjSIPDispatch.h */; settings = {ASSET_TAGS = (); }; };
-		2876059B1BDB0DF600C86BDB /* PjSIPDispatch.m in Sources */ = {isa = PBXBuildFile; fileRef = 287605941BDB0DF600C86BDB /* PjSIPDispatch.m */; settings = {ASSET_TAGS = (); }; };
-		2876059C1BDB0DF600C86BDB /* PjSIPNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605951BDB0DF600C86BDB /* PjSIPNotifications.h */; settings = {ASSET_TAGS = (); }; };
-		2876059D1BDB0DF600C86BDB /* PjSIPNotifications.m in Sources */ = {isa = PBXBuildFile; fileRef = 287605961BDB0DF600C86BDB /* PjSIPNotifications.m */; settings = {ASSET_TAGS = (); }; };
-		2876059E1BDB0DF600C86BDB /* PjSIPProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605971BDB0DF600C86BDB /* PjSIPProxy.h */; settings = {ASSET_TAGS = (); }; };
-		2876059F1BDB0DF600C86BDB /* PjSIPProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 287605981BDB0DF600C86BDB /* PjSIPProxy.m */; settings = {ASSET_TAGS = (); }; };
-		287605B31BDB0E2D00C86BDB /* libg7221codec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A01BDB0E2C00C86BDB /* libg7221codec-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605B41BDB0E2D00C86BDB /* libgsmcodec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A11BDB0E2C00C86BDB /* libgsmcodec-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605B51BDB0E2D00C86BDB /* libilbccodec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A21BDB0E2C00C86BDB /* libilbccodec-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605B61BDB0E2D00C86BDB /* libpj-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A31BDB0E2C00C86BDB /* libpj-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605B71BDB0E2D00C86BDB /* libpjlib-util-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A41BDB0E2C00C86BDB /* libpjlib-util-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605B81BDB0E2D00C86BDB /* libpjmedia-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A51BDB0E2C00C86BDB /* libpjmedia-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605B91BDB0E2D00C86BDB /* libpjmedia-audiodev-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A61BDB0E2D00C86BDB /* libpjmedia-audiodev-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605BA1BDB0E2D00C86BDB /* libpjmedia-codec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A71BDB0E2D00C86BDB /* libpjmedia-codec-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605BB1BDB0E2D00C86BDB /* libpjmedia-videodev-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A81BDB0E2D00C86BDB /* libpjmedia-videodev-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605BC1BDB0E2D00C86BDB /* libpjnath-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A91BDB0E2D00C86BDB /* libpjnath-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605BD1BDB0E2D00C86BDB /* libpjsdp-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AA1BDB0E2D00C86BDB /* libpjsdp-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605BE1BDB0E2D00C86BDB /* libpjsip-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AB1BDB0E2D00C86BDB /* libpjsip-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605BF1BDB0E2D00C86BDB /* libpjsip-simple-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AC1BDB0E2D00C86BDB /* libpjsip-simple-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605C01BDB0E2D00C86BDB /* libpjsip-ua-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AD1BDB0E2D00C86BDB /* libpjsip-ua-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605C11BDB0E2D00C86BDB /* libpjsua-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AE1BDB0E2D00C86BDB /* libpjsua-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605C21BDB0E2D00C86BDB /* libpjsua2-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AF1BDB0E2D00C86BDB /* libpjsua2-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605C31BDB0E2D00C86BDB /* libresample-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605B01BDB0E2D00C86BDB /* libresample-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605C41BDB0E2D00C86BDB /* libspeex-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605B11BDB0E2D00C86BDB /* libspeex-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
-		287605C51BDB0E2D00C86BDB /* libsrtp-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605B21BDB0E2D00C86BDB /* libsrtp-arm-apple-darwin9.a */; settings = {ASSET_TAGS = (); }; };
+		2817AC021BE85B4000DA1AE5 /* PushKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2817AC011BE85B4000DA1AE5 /* PushKit.framework */; };
+		286D9F531BEA3EE100CC1DA0 /* VoipPush.h in Headers */ = {isa = PBXBuildFile; fileRef = 286D9F511BEA3EE100CC1DA0 /* VoipPush.h */; };
+		286D9F541BEA3EE100CC1DA0 /* VoipPush.m in Sources */ = {isa = PBXBuildFile; fileRef = 286D9F521BEA3EE100CC1DA0 /* VoipPush.m */; };
+		2876058F1BDB0DD300C86BDB /* PJUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = 2876058C1BDB0DD300C86BDB /* PJUtil.h */; };
+		287605901BDB0DD300C86BDB /* PJUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 2876058D1BDB0DD300C86BDB /* PJUtil.m */; };
+		287605911BDB0DD300C86BDB /* Util.h in Headers */ = {isa = PBXBuildFile; fileRef = 2876058E1BDB0DD300C86BDB /* Util.h */; };
+		287605991BDB0DF600C86BDB /* PJSIP.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605921BDB0DF600C86BDB /* PJSIP.h */; };
+		2876059A1BDB0DF600C86BDB /* PjSIPDispatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605931BDB0DF600C86BDB /* PjSIPDispatch.h */; };
+		2876059B1BDB0DF600C86BDB /* PjSIPDispatch.m in Sources */ = {isa = PBXBuildFile; fileRef = 287605941BDB0DF600C86BDB /* PjSIPDispatch.m */; };
+		2876059C1BDB0DF600C86BDB /* PjSIPNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605951BDB0DF600C86BDB /* PjSIPNotifications.h */; };
+		2876059D1BDB0DF600C86BDB /* PjSIPNotifications.m in Sources */ = {isa = PBXBuildFile; fileRef = 287605961BDB0DF600C86BDB /* PjSIPNotifications.m */; };
+		2876059E1BDB0DF600C86BDB /* PjSIPProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 287605971BDB0DF600C86BDB /* PjSIPProxy.h */; };
+		2876059F1BDB0DF600C86BDB /* PjSIPProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 287605981BDB0DF600C86BDB /* PjSIPProxy.m */; };
+		287605B31BDB0E2D00C86BDB /* libg7221codec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A01BDB0E2C00C86BDB /* libg7221codec-arm-apple-darwin9.a */; };
+		287605B41BDB0E2D00C86BDB /* libgsmcodec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A11BDB0E2C00C86BDB /* libgsmcodec-arm-apple-darwin9.a */; };
+		287605B51BDB0E2D00C86BDB /* libilbccodec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A21BDB0E2C00C86BDB /* libilbccodec-arm-apple-darwin9.a */; };
+		287605B61BDB0E2D00C86BDB /* libpj-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A31BDB0E2C00C86BDB /* libpj-arm-apple-darwin9.a */; };
+		287605B71BDB0E2D00C86BDB /* libpjlib-util-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A41BDB0E2C00C86BDB /* libpjlib-util-arm-apple-darwin9.a */; };
+		287605B81BDB0E2D00C86BDB /* libpjmedia-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A51BDB0E2C00C86BDB /* libpjmedia-arm-apple-darwin9.a */; };
+		287605B91BDB0E2D00C86BDB /* libpjmedia-audiodev-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A61BDB0E2D00C86BDB /* libpjmedia-audiodev-arm-apple-darwin9.a */; };
+		287605BA1BDB0E2D00C86BDB /* libpjmedia-codec-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A71BDB0E2D00C86BDB /* libpjmedia-codec-arm-apple-darwin9.a */; };
+		287605BB1BDB0E2D00C86BDB /* libpjmedia-videodev-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A81BDB0E2D00C86BDB /* libpjmedia-videodev-arm-apple-darwin9.a */; };
+		287605BC1BDB0E2D00C86BDB /* libpjnath-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605A91BDB0E2D00C86BDB /* libpjnath-arm-apple-darwin9.a */; };
+		287605BD1BDB0E2D00C86BDB /* libpjsdp-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AA1BDB0E2D00C86BDB /* libpjsdp-arm-apple-darwin9.a */; };
+		287605BE1BDB0E2D00C86BDB /* libpjsip-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AB1BDB0E2D00C86BDB /* libpjsip-arm-apple-darwin9.a */; };
+		287605BF1BDB0E2D00C86BDB /* libpjsip-simple-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AC1BDB0E2D00C86BDB /* libpjsip-simple-arm-apple-darwin9.a */; };
+		287605C01BDB0E2D00C86BDB /* libpjsip-ua-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AD1BDB0E2D00C86BDB /* libpjsip-ua-arm-apple-darwin9.a */; };
+		287605C11BDB0E2D00C86BDB /* libpjsua-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AE1BDB0E2D00C86BDB /* libpjsua-arm-apple-darwin9.a */; };
+		287605C21BDB0E2D00C86BDB /* libpjsua2-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605AF1BDB0E2D00C86BDB /* libpjsua2-arm-apple-darwin9.a */; };
+		287605C31BDB0E2D00C86BDB /* libresample-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605B01BDB0E2D00C86BDB /* libresample-arm-apple-darwin9.a */; };
+		287605C41BDB0E2D00C86BDB /* libspeex-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605B11BDB0E2D00C86BDB /* libspeex-arm-apple-darwin9.a */; };
+		287605C51BDB0E2D00C86BDB /* libsrtp-arm-apple-darwin9.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605B21BDB0E2D00C86BDB /* libsrtp-arm-apple-darwin9.a */; };
 		287605C71BDB0EC500C86BDB /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605C61BDB0EC500C86BDB /* AudioToolbox.framework */; };
 		287605C91BDB0ECF00C86BDB /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605C81BDB0ECF00C86BDB /* CFNetwork.framework */; };
 		287605CB1BDB0EDA00C86BDB /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 287605CA1BDB0EDA00C86BDB /* AVFoundation.framework */; };
@@ -78,6 +81,9 @@
 		24DD6D1B1134B66800162E58 /* titanium.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = titanium.xcconfig; sourceTree = "<group>"; };
 		24DE9E0F11C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ComCrissmoldovanTisipModuleAssets.h; path = Classes/ComCrissmoldovanTisipModuleAssets.h; sourceTree = "<group>"; };
 		24DE9E1011C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ComCrissmoldovanTisipModuleAssets.m; path = Classes/ComCrissmoldovanTisipModuleAssets.m; sourceTree = "<group>"; };
+		2817AC011BE85B4000DA1AE5 /* PushKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PushKit.framework; path = System/Library/Frameworks/PushKit.framework; sourceTree = SDKROOT; };
+		286D9F511BEA3EE100CC1DA0 /* VoipPush.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VoipPush.h; path = Classes/VoipPush.h; sourceTree = "<group>"; };
+		286D9F521BEA3EE100CC1DA0 /* VoipPush.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VoipPush.m; path = Classes/VoipPush.m; sourceTree = "<group>"; };
 		2876058C1BDB0DD300C86BDB /* PJUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PJUtil.h; path = Classes/PJUtil.h; sourceTree = "<group>"; };
 		2876058D1BDB0DD300C86BDB /* PJUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PJUtil.m; path = Classes/PJUtil.m; sourceTree = "<group>"; };
 		2876058E1BDB0DD300C86BDB /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Util.h; path = Classes/Util.h; sourceTree = "<group>"; };
@@ -120,6 +126,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2817AC021BE85B4000DA1AE5 /* PushKit.framework in Frameworks */,
 				287605CB1BDB0EDA00C86BDB /* AVFoundation.framework in Frameworks */,
 				287605C91BDB0ECF00C86BDB /* CFNetwork.framework in Frameworks */,
 				287605C71BDB0EC500C86BDB /* AudioToolbox.framework in Frameworks */,
@@ -190,6 +197,7 @@
 		0867D69AFE84028FC02AAC07 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2817AC011BE85B4000DA1AE5 /* PushKit.framework */,
 				287605CA1BDB0EDA00C86BDB /* AVFoundation.framework */,
 				287605C81BDB0ECF00C86BDB /* CFNetwork.framework */,
 				287605C61BDB0EC500C86BDB /* AudioToolbox.framework */,
@@ -221,6 +229,8 @@
 				287605961BDB0DF600C86BDB /* PjSIPNotifications.m */,
 				287605971BDB0DF600C86BDB /* PjSIPProxy.h */,
 				287605981BDB0DF600C86BDB /* PjSIPProxy.m */,
+				286D9F511BEA3EE100CC1DA0 /* VoipPush.h */,
+				286D9F521BEA3EE100CC1DA0 /* VoipPush.m */,
 			);
 			name = TiSIP;
 			sourceTree = "<group>";
@@ -259,6 +269,7 @@
 				24DD6CF91134B3F500162E58 /* ComCrissmoldovanTisipModule.h in Headers */,
 				287605991BDB0DF600C86BDB /* PJSIP.h in Headers */,
 				2876058F1BDB0DD300C86BDB /* PJUtil.h in Headers */,
+				286D9F531BEA3EE100CC1DA0 /* VoipPush.h in Headers */,
 				24DE9E1111C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -333,6 +344,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				286D9F541BEA3EE100CC1DA0 /* VoipPush.m in Sources */,
 				2876059B1BDB0DF600C86BDB /* PjSIPDispatch.m in Sources */,
 				24DD6CFA1134B3F500162E58 /* ComCrissmoldovanTisipModule.m in Sources */,
 				24DE9E1211C5FE74003F90F6 /* ComCrissmoldovanTisipModuleAssets.m in Sources */,
