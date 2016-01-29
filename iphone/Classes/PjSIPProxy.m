@@ -28,11 +28,27 @@
 
 - (NSNumber *) start{
     NSLog(@"PJProxy starting");
+    
+    BOOL success;
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    NSError *error = nil;
+    
+    success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
+                       withOptions:AVAudioSessionCategoryOptionMixWithOthers
+                             error:&error];
+    if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
+    else NSLog(@"AVAudioSession setCategory OK");
+    
+    success = [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
+    if (!success) NSLog(@"AVAudioSession error overrideOutputAudioPort: %@", [error localizedDescription]);
+    else NSLog(@"AVAudioSession overrideOutputAudioPort OK");
+    
     pj_status_t status;
     status = pjsua_create();
     
     pjsua_config cfg;
     pjsua_config_default (&cfg);
+    cfg.enable_unsolicited_mwi = PJ_FALSE;
     
     cfg.stun_srv_cnt = 6;
     
@@ -48,7 +64,7 @@
     // Init the logging config structure
     pjsua_logging_config log_cfg;
     pjsua_logging_config_default(&log_cfg);
-    log_cfg.console_level = 1;
+    log_cfg.console_level = 4;
     
     // Init the pjsua
     status = pjsua_init(&cfg, &log_cfg, NULL);
@@ -58,12 +74,21 @@
     }
     
     // Init transport config structure
-    pjsua_transport_config trasportCfg;
-    pjsua_transport_config_default(&trasportCfg);
+    pjsua_transport_config trasportTcpCfg;
+    pjsua_transport_config_default(&trasportTcpCfg);
     
     // Add TCP transport.
-    status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &trasportCfg, &_transportId);
-    if (status != PJ_SUCCESS) NSLog(@"Error creating transport");
+    status = pjsua_transport_create(PJSIP_TRANSPORT_TCP, &trasportTcpCfg, &_transportId);
+    if (status != PJ_SUCCESS) NSLog(@"Error TCP creating transport");
+    NSLog(@"CREATED TCP TRANSPORT %d", _transportId);
+    
+//    // Init transport config structure
+//    pjsua_transport_config trasportUdpCfg;
+//    pjsua_transport_config_default(&trasportUdpCfg);
+//    
+//    // Add UDP transport.
+//    status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &trasportUdpCfg, NULL);
+//    if (status != PJ_SUCCESS) NSLog(@"Error UDP creating transport");
     
     status = pjsua_start();
     // return negative id if failed
@@ -75,10 +100,10 @@
 
 - (NSNumber *) stop{
     NSLog(@"PJProxy stoping");
-    //    if (_transportId != PJSUA_INVALID_ID) {
-    //        pjsua_transport_close(_transportId, PJ_TRUE);
-    //        _transportId = PJSUA_INVALID_ID;
-    //    }
+        if (_transportId != PJSUA_INVALID_ID) {
+            pjsua_transport_close(_transportId, PJ_TRUE);
+            _transportId = PJSUA_INVALID_ID;
+        }
     
     pjsua_destroy();
     
@@ -92,6 +117,17 @@
     
 }
 
+-(NSNumber *) refresh:(NSNumber *)accountId {
+    pj_status_t status;
+    
+    status = pjsua_acc_set_registration([accountId intValue], PJ_TRUE);
+    
+    // return negative id if failed
+    if (status != PJ_SUCCESS) return [NSNumber numberWithInt:-1];
+    
+    // return account id if OK
+    return [NSNumber numberWithInt:1];
+}
 
 
 -(NSNumber *) register:(NSString *)sipAccount withSipDomain:(NSString *)sipDomain usingRealm:(NSString *)realm usingUsername:(NSString *)username usingPassword:(NSString *)password {
@@ -99,6 +135,7 @@
     pjsua_acc_config cfg;
     
     pjsua_acc_config_default(&cfg);
+    cfg.mwi_enabled = PJ_FALSE;
     
     NSString *sipId = [NSString stringWithFormat:@"sip:%@@%@", sipAccount, sipDomain];
     cfg.id = [PJUtil PJStringWithString: sipId];
@@ -114,7 +151,7 @@
     
     cfg.cred_info[0] = credentials;
     
-    NSString *regUri = [NSString stringWithFormat:@"sip:%@", sipDomain];
+    NSString *regUri = [NSString stringWithFormat:@"sip:%@;transport=tcp", sipDomain];
     
     cfg.reg_uri = [PJUtil PJStringWithString: regUri];
     
@@ -155,7 +192,7 @@
 
 - (NSNumber *) placeCall:(NSNumber *)accountId toUri:(NSString *)uri {
     pj_status_t status;
-    pj_str_t calledUri = [PJUtil PJStringWithString:uri];
+    pj_str_t calledUri = [PJUtil PJStringWithString:[NSString stringWithFormat:@"%@;transport=tcp", uri]];
     
     status = pjsua_call_make_call([accountId intValue], &calledUri, 0, NULL, NULL, NULL);
     // return negative id if failed
@@ -186,9 +223,40 @@
     return [NSNumber numberWithInt: 1];
 }
 
+- (NSNumber *) muteCall:(NSNumber *)callId{
+    pj_status_t status;
+    
+    pjsua_call_info ci;
+    pjsua_conf_port_id conf_port_id;
+
+    pjsua_call_get_info([callId intValue], &ci);
+    conf_port_id = ci.conf_slot;
+    
+    pjsua_conf_disconnect(0, conf_port_id);
+    
+    // return account id if OK
+    return [NSNumber numberWithInt: 1];
+}
+
+- (NSNumber *) unmuteCall:(NSNumber *)callId{
+    pj_status_t status;
+    
+    pjsua_call_info ci;
+    pjsua_conf_port_id conf_port_id;
+    
+    pjsua_call_get_info([callId intValue], &ci);
+    conf_port_id = ci.conf_slot;
+    
+    pjsua_conf_connect(0,conf_port_id);
+    
+    // return account id if OK
+    return [NSNumber numberWithInt: 1];
+}
+
 - (NSNumber *) sendText:(NSNumber *)accountId toUri:(NSString *)uri withContent:(NSString *)content{
     pj_status_t status;
-    pj_str_t toUri = [PJUtil PJStringWithString:uri];
+    pj_str_t toUri = [PJUtil PJStringWithString:[NSString stringWithFormat:@"%@;transport=tcp", uri]];
+    NSLog(@"SENDING SMS TO: %@", [PJUtil stringWithPJString:&toUri]);
     pj_str_t text = [PJUtil PJStringWithString:content];
     status = pjsua_im_send([accountId intValue], &toUri, NULL, &text, NULL, NULL);
     // return negative id if failed
@@ -202,6 +270,49 @@
     return [NSNumber numberWithInt:pjsua_acc_get_count()];
 }
 
+- (BOOL)setLoud:(BOOL)loud {
+
+    if (loud) {
+        NSLog(@"SETTING SPEAKERS");
+        @try {
+            BOOL success;
+            AVAudioSession *session = [AVAudioSession sharedInstance];
+            NSError *error = nil;
+            
+            success = [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
+            if (success) {
+                NSLog(@"AVAudioSession overrideOutputAudioPort to speaker OK");
+                return YES;
+            }else{
+                return NO;
+                NSLog(@"AVAudioSession error overrideOutputAudioPort to speaker: %@", [error localizedDescription]);
+            }
+        }
+        @catch (NSException *exception) {
+            return NO;
+        }
+    } else {
+        NSLog(@"SETTING EARPIECE");
+        @try {
+            BOOL success;
+            AVAudioSession *session = [AVAudioSession sharedInstance];
+            NSError *error = nil;
+            
+            success = [session overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:&error];
+            if (success) {
+                NSLog(@"AVAudioSession overrideOutputAudioPort to none OK");
+                return YES;
+            }else{
+                return NO;
+                NSLog(@"AVAudioSession error overrideOutputAudioPort to none: %@", [error localizedDescription]);
+            }
+        }
+        @catch (NSException *exception) {
+            NSLog(@"---NOT OK: %@", [exception description]);
+            return NO;
+        }
+    }
+}
 
 
 @end

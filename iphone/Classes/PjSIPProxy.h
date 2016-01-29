@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 #import "PjSIPDispatch.h"
 #import "PjSIP.h"
 #import "Util.h"
@@ -28,6 +29,9 @@ usingPassword:(NSString *) password;
 // unregisters an account
 - (NSNumber *) unregister:(NSNumber *)accountId;
 
+// upadte an account reg info
+- (NSNumber *) refresh:(NSNumber *)accountId;
+
 - (pjsua_acc_info) getAccountInfo:(NSNumber *)accountId;
 
 - (NSNumber *) stop;
@@ -36,7 +40,10 @@ usingPassword:(NSString *) password;
 - (NSNumber *) placeCall:(NSNumber *)accountId toUri:(NSString *)uri;
 - (NSNumber *) answerCall:(NSNumber *)callId;
 - (NSNumber *) hangUpCall:(NSNumber *)callId;
+- (NSNumber *) muteCall:(NSNumber *)callId;
+- (NSNumber *) unmuteCall:(NSNumber *)callId;
 - (NSNumber *) sendText:(NSNumber *)accountId toUri:(NSString *)uri withContent:(NSString *)content;
 - (NSNumber *) getRegisteredAccountsCount;
+- (BOOL)setLoud:(BOOL)loud;
 
 @end

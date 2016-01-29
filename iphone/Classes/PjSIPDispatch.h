@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 #import "PJSIP.h"
 
 @interface PjSIPDispatch : NSObject

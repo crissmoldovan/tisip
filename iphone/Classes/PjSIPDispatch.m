@@ -249,6 +249,8 @@ void onRegistrationState(pjsua_acc_id accountId) {
 }
 
 void onIncomingCall(pjsua_acc_id accountId, pjsua_call_id callId, pjsip_rx_data *rdata) {
+    pjsua_call_answer(callId,180, NULL, NULL);
+
     dispatch(^{ [PjSIPDispatch dispatchIncomingCall:accountId callId:callId data:rdata]; });
 }
 

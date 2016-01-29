@@ -328,25 +328,14 @@ PjSIPProxy *pjproxy;
 
 - (void)pushRegistry:(PKPushRegistry *)registry didReceiveIncomingPushWithPayload:(PKPushPayload *)payload forType:(NSString *)type
 {
-//    NSLog(@"didReceiveIncomingPushWithPayload");
-//    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
-//                                [NSDictionary dictionaryWithDictionary:payload.dictionaryPayload],@"data", nil];
-//   [self fireEvent:@"PUSH.RECEIVED" withObject:eventObject];
-
-    NSLog(@"checking if app booted %@", [[TiApp app] appBooted] ? @"YES" : @"NO");
-    
-    [[UIApplication sharedApplication] cancelAllLocalNotifications];
+    NSLog(@"didReceiveIncomingPushWithPayload");
     
     NSDictionary *payloadData = [NSDictionary dictionaryWithDictionary:payload.dictionaryPayload];
     NSLog(@"received type: %@", [payloadData valueForKey:@"evt_type"])
-    
-    UILocalNotification* localNotification = [[UILocalNotification alloc] init];
-    localNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:0];
-    localNotification.alertBody = [payloadData valueForKey:@"message"];
-    localNotification.timeZone = [NSTimeZone defaultTimeZone];
-    [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
-    
-    NSLog(@"IncomingPushWithPayload");
+
+    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+                                payloadData,@"data", nil];
+   [self fireEvent:@"PUSH.RECEIVED" withObject:eventObject];
 }
 
 //- (void) didReceiveVoipRegisterSuccess:(NSNotification *) notif{
@@ -407,6 +396,13 @@ PjSIPProxy *pjproxy;
     pushRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 }
 
+-(id)reset:(id)args{
+    
+    [pjproxy stop];
+    [pjproxy start];
+}
+
+
 -(id)unregister:(id)args{
     ENSURE_SINGLE_ARG(args, NSNumber);
     
@@ -438,6 +434,33 @@ PjSIPProxy *pjproxy;
     [pjproxy hangUpCall:args];
 }
 
+-(void)muteCall:(id)args{
+    ENSURE_SINGLE_ARG(args, NSNumber);
+    
+    NSLog(@"muting callid: %@", args);
+    
+    [pjproxy muteCall:args];
+    
+    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+                                 [NSNumber numberWithInt:args],@"callId", nil];
+    
+    [self fireEvent:@"MUTED.YES" withObject:eventObject];
+
+}
+
+-(void)unmuteCall:(id)args{
+    ENSURE_SINGLE_ARG(args, NSNumber);
+    
+    NSLog(@"unmuting callid: %@", args);
+    
+    [pjproxy unmuteCall:args];
+    
+    NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
+                                 [NSNumber numberWithInt:args],@"callId", nil];
+    
+    [self fireEvent:@"MUTED.NO" withObject:eventObject];
+}
+
 -(void)sendText:(id)args{
     ENSURE_SINGLE_ARG(args, NSDictionary);
     
@@ -447,4 +470,24 @@ PjSIPProxy *pjproxy;
     
     [pjproxy sendText:accountId toUri:uri withContent:content];
 }
+-(void)enableSpeaker:(id)args{
+    BOOL *status = [pjproxy setLoud:YES];
+    
+    if (status){
+       [self fireEvent:@"SPEAKER.YES"];
+    }else{
+       [self fireEvent:@"SPEAKER.NO"];
+    }
+}
+-(void)disableSpeaker:(id)args{
+    BOOL *status = [pjproxy setLoud:NO];
+    
+    if (status){
+        [self fireEvent:@"SPEAKER.NO"];
+    }else{
+        // speaker is still active
+        [self fireEvent:@"SPEAKER.YES"];
+    }
+}
+
 @end
