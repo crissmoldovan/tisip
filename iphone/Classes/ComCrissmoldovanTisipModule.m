@@ -164,6 +164,18 @@ PjSIPProxy *pjproxy;
         case PJSIP_INV_STATE_CONNECTING: {
             //[self startRingback];
             callStatus = @"CONNECTING";
+            
+            BOOL success;
+            AVAudioSession *session = [AVAudioSession sharedInstance];
+            NSError *error = nil;
+            
+            success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
+                               withOptions:AVAudioSessionCategoryOptionMixWithOthers
+                                     error:&error];
+            if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
+            
+            success = [session setActive:YES error:&error];
+            if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
         } break;
             
         case PJSIP_INV_STATE_CONFIRMED: {
@@ -174,6 +186,16 @@ PjSIPProxy *pjproxy;
         case PJSIP_INV_STATE_DISCONNECTED: {
             //[self stopRingback];
             callStatus = @"DISCONNECTED";
+            BOOL success;
+            AVAudioSession *session = [AVAudioSession sharedInstance];
+            NSError *error = nil;
+            
+            success = [session setCategory:AVAudioSessionCategorySoloAmbient
+                                     error:&error];
+            if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
+                        
+            success = [session setActive:NO error:&error];
+            if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
         } break;
     }
     
@@ -195,14 +217,20 @@ PjSIPProxy *pjproxy;
     pjsua_call_info ci;
     pjsua_call_get_info(callId, &ci);
     
+    NSString *remote_contact = [PJUtil stringWithPJString:&ci.remote_contact];
+    NSString *remote_info = [PJUtil stringWithPJString:&ci.remote_info];
     NSString *from = [PJUtil stringWithPJString:&ci.remote_info];
+    NSString *remote_id = [PJUtil stringWithPJString:&ci.call_id];
     
-    NSLog(@"INCOMING CALL NOTIF: callid: %u for account: %u from %@", callId, accountId, from);
+    NSLog(@"INCOMING CALL NOTIF: callid: %u for account: %u from %@ rc: %@ ri: %@ rid: %@", callId, accountId, from, remote_contact, remote_info, remote_id);
     NSString *eventName = @"CALL.INCOMING";
     NSDictionary *eventObject = [NSDictionary dictionaryWithObjectsAndKeys:
                                  [NSNumber numberWithInt:accountId],@"accountId",
                                  [NSNumber numberWithInt:callId],@"callId",
-                                 from, @"from", nil];
+                                 from, @"from",
+                                 remote_contact, @"remote_contact",
+                                 remote_info, @"remote_info",
+                                 remote_id, @"remote_id",nil];
     [self fireEvent:eventName withObject:eventObject];
 }
 
@@ -488,6 +516,13 @@ PjSIPProxy *pjproxy;
         // speaker is still active
         [self fireEvent:@"SPEAKER.YES"];
     }
+}
+-(void)sentDTMF:(id)args{
+    ENSURE_SINGLE_ARG(args, NSDictionary);
+    NSNumber* callId = [NSNumber numberWithInt:[TiUtils intValue:@"callId" properties:args]];
+    NSString* digit = [TiUtils stringValue:@"digit" properties:args def:@""];
+    
+    [pjproxy sendDTMF:callId dtmf:digit];
 }
 
 @end

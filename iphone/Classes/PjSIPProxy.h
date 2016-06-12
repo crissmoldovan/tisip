@@ -45,5 +45,6 @@ usingPassword:(NSString *) password;
 - (NSNumber *) sendText:(NSNumber *)accountId toUri:(NSString *)uri withContent:(NSString *)content;
 - (NSNumber *) getRegisteredAccountsCount;
 - (BOOL)setLoud:(BOOL)loud;
+- (void) sendDTMF:(NSNumber *)callId dtmf:(NSString *)digit;
 
 @end

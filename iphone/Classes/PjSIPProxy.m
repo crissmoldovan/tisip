@@ -33,9 +33,13 @@
     AVAudioSession *session = [AVAudioSession sharedInstance];
     NSError *error = nil;
     
-    success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
-                       withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                             error:&error];
+//    success = [session setMode:AVAudioSessionModeVoiceChat error:&error];
+//    if (!success) NSLog(@"AVAudioSession error setMode: %@", [error localizedDescription]);
+//    else NSLog(@"AVAudioSession setMode OK");
+//
+//    success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
+//                       withOptions:AVAudioSessionCategoryOptionMixWithOthers
+//                             error:&error];
     if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
     else NSLog(@"AVAudioSession setCategory OK");
     
@@ -312,6 +316,18 @@
             return NO;
         }
     }
+}
+
+- (void) sendDTMF:(NSNumber *)callId dtmf:(NSString *)digit {
+    pj_status_t status;
+    pj_str_t digitStr = [PJUtil PJStringWithString:digit];
+    
+    status = pjsua_call_dial_dtmf([callId intValue], &digitStr);
+    // return negative id if failed
+    if (status != PJ_SUCCESS) return [NSNumber numberWithInt:-1];
+    
+    // return account id if OK
+    return [NSNumber numberWithInt: 1];
 }
 
 
