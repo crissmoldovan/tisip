@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sip_auth.h 5336 2016-06-07 10:07:57Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -166,6 +166,7 @@ typedef struct pjsip_cached_auth
     /** Standard list member */
     PJ_DECL_LIST_MEMBER(struct pjsip_cached_auth);
 
+    pj_pool_t			*pool;      /**< Pool for cached auth	    */
     pj_str_t			 realm;	    /**< Realm.			    */
     pj_bool_t			 is_proxy;  /**< Server type (401/407)	    */
     pjsip_auth_qop_type		 qop_value; /**< qop required by server.    */

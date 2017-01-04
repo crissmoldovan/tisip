@@ -36,6 +36,10 @@
     (defined(PJ_WIN64) && PJ_WIN64!=0) || \
     (defined(PJ_WIN32_WINCE) && PJ_WIN32_WINCE!=0)
 
+/* Undefine EADDRINUSE first, we want it equal to WSAEADDRINUSE,
+ * while WinSDK 10 defines it to another value.
+ */
+#undef EADDRINUSE
 #define EADDRINUSE WSAEADDRINUSE
 
 #endif
@@ -785,7 +789,7 @@ static void send_ambi_arg(cli_telnet_sess *sess,
     pj_strcat2(&send_data, "^");
     /* Get the max length of the command name */
     for (i=0;i<info->hint_cnt;++i) {
-	if ((&hint[i].type) && (hint[i].type.slen > 0)) {
+	if (hint[i].type.slen > 0) {
 	    if (pj_stricmp(&hint[i].type, &sc_type) == 0) {
 		if ((i > 0) && (!pj_stricmp(&hint[i-1].desc, &hint[i].desc))) {
 		    cmd_length += (hint[i].name.slen + 3);
@@ -807,7 +811,7 @@ static void send_ambi_arg(cli_telnet_sess *sess,
     cmd_length = 0;
     /* Build hint information */
     for (i=0;i<info->hint_cnt;++i) {
-	if ((&hint[i].type) && (hint[i].type.slen > 0)) {
+	if (hint[i].type.slen > 0) {
 	    if (pj_stricmp(&hint[i].type, &sc_type) == 0) {
 		parse_state = OP_SHORTCUT;
 	    } else if (pj_stricmp(&hint[i].type, &choice_type) == 0) {
@@ -1369,7 +1373,7 @@ static void telnet_fe_write_log(pj_cli_front_end *fe, int level,
         cli_telnet_sess *tsess = (cli_telnet_sess *)sess;
 
         sess = sess->next;
-	if (tsess->base.log_level > level) {
+	if (tsess->base.log_level >= level) {
 	    pj_str_t s;
 
 	    pj_strset(&s, (char *)data, len);
@@ -1924,7 +1928,8 @@ PJ_DEF(pj_status_t) pj_cli_telnet_get_info(pj_cli_front_end *fe,
     if (status != PJ_SUCCESS)
 	return status;
 
-    pj_strcpy2(&info->ip_address, pj_inet_ntoa(hostip.ipv4.sin_addr));
+    pj_sockaddr_print(&hostip, info->buf_, sizeof(info->buf_), 0);
+    pj_strset2(&info->ip_address, info->buf_);
 
     info->port = tfe->cfg.port;
 

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: resamplesubs.c 4728 2014-02-04 10:13:56Z bennylp $ */
 /*
  * Digital Audio Resampling Home Page located at
  * http://www-ccrma.stanford.edu/~jos/resample/.

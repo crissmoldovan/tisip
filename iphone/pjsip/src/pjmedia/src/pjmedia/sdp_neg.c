@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sdp_neg.c 5170 2015-08-25 08:45:46Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -38,6 +38,7 @@ struct pjmedia_sdp_neg
     pj_bool_t		  answer_was_remote;
 
     pjmedia_sdp_session	*initial_sdp,	    /**< Initial local SDP	     */
+			*initial_sdp_tmp,   /**< Temporary initial local SDP */
 			*active_local_sdp,  /**< Currently active local SDP. */
 			*active_remote_sdp, /**< Currently active remote's.  */
 			*neg_local_sdp,	    /**< Temporary local SDP.	     */
@@ -84,7 +85,7 @@ static pj_status_t custom_fmt_match( pj_pool_t *pool,
  */
 PJ_DEF(const char*) pjmedia_sdp_neg_state_str(pjmedia_sdp_neg_state state)
 {
-    if (state >=0 && state < (pjmedia_sdp_neg_state)PJ_ARRAY_SIZE(state_str))
+    if ((int)state >=0 && state < (pjmedia_sdp_neg_state)PJ_ARRAY_SIZE(state_str))
 	return state_str[state];
 
     return "<?UNKNOWN?>";
@@ -398,6 +399,7 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_modify_local_offer2(
     }
 
     /* New_offer fixed */
+    neg->initial_sdp_tmp = neg->initial_sdp;
     neg->initial_sdp = new_offer;
     neg->neg_local_sdp = pjmedia_sdp_session_clone(pool, new_offer);
 
@@ -423,6 +425,13 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_send_local_offer( pj_pool_t *pool,
 	/* If in STATE_DONE, set the active SDP as the offer. */
 	PJ_ASSERT_RETURN(neg->active_local_sdp, PJMEDIA_SDPNEG_ENOACTIVE);
 
+	/* Retain initial SDP */
+	if (neg->initial_sdp) {
+	    neg->initial_sdp_tmp = neg->initial_sdp;
+    	    neg->initial_sdp = pjmedia_sdp_session_clone(pool,
+							 neg->initial_sdp);
+	}
+
 	neg->state = PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER;
 	neg->neg_local_sdp = pjmedia_sdp_session_clone(pool, 
 						       neg->active_local_sdp);
@@ -435,7 +444,6 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_send_local_offer( pj_pool_t *pool,
 	*offer = neg->neg_local_sdp;
     }
 
-    
     return PJ_SUCCESS;
 }
 
@@ -503,6 +511,7 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_set_local_answer( pj_pool_t *pool,
 	neg->neg_local_sdp = pjmedia_sdp_session_clone(pool, local);
 	if (neg->initial_sdp) {
 	    /* Retain initial_sdp value. */
+	    neg->initial_sdp_tmp = neg->initial_sdp;
 	    neg->initial_sdp = pjmedia_sdp_session_clone(pool,
 							 neg->initial_sdp);
         
@@ -518,6 +527,8 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_set_local_answer( pj_pool_t *pool,
 	}
     } else {
 	PJ_ASSERT_RETURN(neg->initial_sdp, PJMEDIA_SDPNEG_ENOINITIAL);
+	neg->initial_sdp_tmp = neg->initial_sdp;
+	neg->initial_sdp = pjmedia_sdp_session_clone(pool, neg->initial_sdp);
 	neg->neg_local_sdp = pjmedia_sdp_session_clone(pool, neg->initial_sdp);
     }
 
@@ -1165,18 +1176,18 @@ static pj_status_t match_offer(pj_pool_t *pool,
 			{
 			    /* Match! */
 			    if (is_codec) {
-				pjmedia_sdp_media *o, *a;
+				pjmedia_sdp_media *o_med, *a_med;
 				unsigned o_fmt_idx, a_fmt_idx;
 
-				o = (pjmedia_sdp_media*)offer;
-				a = (pjmedia_sdp_media*)preanswer;
+				o_med = (pjmedia_sdp_media*)offer;
+				a_med = (pjmedia_sdp_media*)preanswer;
 				o_fmt_idx = prefer_remote_codec_order? i:j;
 				a_fmt_idx = prefer_remote_codec_order? j:i;
 
 				/* Call custom format matching callbacks */
 				if (custom_fmt_match(pool, &or_.enc_name,
-						     o, o_fmt_idx,
-						     a, a_fmt_idx,
+						     o_med, o_fmt_idx,
+						     a_med, a_fmt_idx,
 						     ALLOW_MODIFY_ANSWER) !=
 				    PJ_SUCCESS)
 				{
@@ -1396,17 +1407,24 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_cancel_offer(pjmedia_sdp_neg *neg)
 		     neg->state == PJMEDIA_SDP_NEG_STATE_REMOTE_OFFER,
 		     PJMEDIA_SDPNEG_EINSTATE);
 
-    /* Clear temporary SDP */
-    neg->neg_local_sdp = neg->neg_remote_sdp = NULL;
-    neg->has_remote_answer = PJ_FALSE;
-
-    if (neg->state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
+    if (neg->state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER &&
+	neg->active_local_sdp) 
+    {
 	/* Increment next version number. This happens if for example
 	 * the reinvite offer is rejected by 488. If we don't increment
 	 * the version here, the next offer will have the same version.
 	 */
 	neg->active_local_sdp->origin.version++;
     }
+
+    /* Revert back initial SDP */
+    if (neg->state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER)
+	neg->initial_sdp = neg->initial_sdp_tmp;
+
+    /* Clear temporary SDP */
+    neg->initial_sdp_tmp = NULL;
+    neg->neg_local_sdp = neg->neg_remote_sdp = NULL;
+    neg->has_remote_answer = PJ_FALSE;
 
     /* Reset state to done */
     neg->state = PJMEDIA_SDP_NEG_STATE_DONE;
@@ -1471,7 +1489,12 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_negotiate( pj_pool_t *pool,
     /* Save state */
     neg->answer_was_remote = neg->has_remote_answer;
 
+    /* Revert back initial SDP if nego fails */
+    if (status != PJ_SUCCESS)
+	neg->initial_sdp = neg->initial_sdp_tmp;
+
     /* Clear temporary SDP */
+    neg->initial_sdp_tmp = NULL;
     neg->neg_local_sdp = neg->neg_remote_sdp = NULL;
     neg->has_remote_answer = PJ_FALSE;
 
@@ -1503,7 +1526,7 @@ static pj_status_t custom_fmt_match(pj_pool_t *pool,
 }
 
 /* Register customized SDP format negotiation callback function. */
-PJ_DECL(pj_status_t) pjmedia_sdp_neg_register_fmt_match_cb(
+PJ_DEF(pj_status_t) pjmedia_sdp_neg_register_fmt_match_cb(
 					const pj_str_t *fmt_name,
 					pjmedia_sdp_neg_fmt_match_cb cb)
 {
@@ -1594,7 +1617,12 @@ PJ_DEF(pj_status_t) pjmedia_sdp_neg_fmt_match(pj_pool_t *pool,
     pjmedia_sdp_attr_get_rtpmap(attr, &a_rtpmap);
 
     if (pj_stricmp(&o_rtpmap.enc_name, &a_rtpmap.enc_name) != 0 ||
-	o_rtpmap.clock_rate != a_rtpmap.clock_rate)
+	(o_rtpmap.clock_rate != a_rtpmap.clock_rate) ||
+	(!(pj_stricmp(&o_rtpmap.param, &a_rtpmap.param) == 0 ||
+	   (a_rtpmap.param.slen == 0 && o_rtpmap.param.slen == 1 &&
+	    *o_rtpmap.param.ptr == '1') ||
+	   (o_rtpmap.param.slen == 0 && a_rtpmap.param.slen == 1 &&
+	    *a_rtpmap.param.ptr=='1'))))
     {
 	return PJMEDIA_SDP_EFORMATNOTEQUAL;
     }

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sip_reg.c 5336 2016-06-07 10:07:57Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -88,6 +88,7 @@ struct pjsip_regc
     pjsip_contact_hdr		 removed_contact_hdr_list;
     pjsip_expires_hdr		*expires_hdr;
     pj_uint32_t			 expires;
+    pj_uint32_t			 expires_requested;
     pj_uint32_t			 delay_before_refresh;
     pjsip_route_hdr		 route_set;
     pjsip_hdr			 hdr_list;
@@ -175,6 +176,7 @@ PJ_DEF(pj_status_t) pjsip_regc_destroy(pjsip_regc *regc)
 	regc->cb = NULL;
 	pj_lock_release(regc->lock);
     } else {
+	pjsip_cached_auth *auth = NULL;
 	pjsip_tpselector_dec_ref(&regc->tp_sel);
 	if (regc->last_transport) {
 	    pjsip_transport_dec_ref(regc->last_transport);
@@ -188,6 +190,13 @@ PJ_DEF(pj_status_t) pjsip_regc_destroy(pjsip_regc *regc)
 	pj_lock_release(regc->lock);
 	pj_lock_destroy(regc->lock);
 	regc->lock = NULL;
+
+	auth = regc->auth_sess.cached_auth.next;
+	while (auth != &regc->auth_sess.cached_auth) {
+	    pjsip_endpt_release_pool(regc->endpt, auth->pool);
+	    auth = auth->next;
+	}
+
 	pjsip_endpt_release_pool(regc->endpt, regc->pool);
     }
 
@@ -213,7 +222,7 @@ PJ_DEF(pj_status_t) pjsip_regc_get_info( pjsip_regc *regc,
 	info->next_reg = 0;
     else if (regc->auto_reg == 0)
 	info->next_reg = 0;
-    else if (regc->expires < 0)
+    else if (regc->expires == PJSIP_REGC_EXPIRATION_NOT_SPECIFIED)
 	info->next_reg = regc->expires;
     else {
 	pj_time_val now, next_reg;
@@ -550,6 +559,8 @@ PJ_DEF(pj_status_t) pjsip_regc_register(pjsip_regc *regc, pj_bool_t autoreg,
     PJ_ASSERT_RETURN(regc && p_tdata, PJ_EINVAL);
 
     pj_lock_acquire(regc->lock);
+    
+    regc->expires_requested = 1;
 
     status = create_request(regc, &tdata);
     if (status != PJ_SUCCESS) {
@@ -620,6 +631,8 @@ PJ_DEF(pj_status_t) pjsip_regc_unregister(pjsip_regc *regc,
 	pjsip_endpt_cancel_timer(regc->endpt, &regc->timer);
 	regc->timer.id = 0;
     }
+
+    regc->expires_requested = 0;
 
     status = create_request(regc, &tdata);
     if (status != PJ_SUCCESS) {
@@ -742,7 +755,8 @@ static void cbparam_init( struct pjsip_regc_cbparam *cbparam,
     cbparam->reason = *reason;
     cbparam->rdata = rdata;
     cbparam->contact_cnt = contact_cnt;
-    cbparam->expiration = expiration;
+    cbparam->expiration = (expiration >= 0? expiration:
+          		   regc->expires_requested);
     if (contact_cnt) {
 	pj_memcpy( cbparam->contact, contact, 
 		   contact_cnt*sizeof(pjsip_contact_hdr*));
@@ -1362,7 +1376,12 @@ PJ_DEF(pj_status_t) pjsip_regc_send(pjsip_regc *regc, pjsip_tx_data *tdata)
 	return PJSIP_EBUSY;
     }
 
-    pj_assert(regc->current_op == REGC_IDLE);
+    /* Just regc->has_tsx check above should be enough. This assertion check
+     * may cause problem, e.g: when regc_tsx_callback() invokes callback,
+     * lock is released and 'has_tsx' is set to FALSE and 'current_op' has
+     * not been updated to REGC_IDLE yet.
+     */
+    //pj_assert(regc->current_op == REGC_IDLE);
 
     /* Invalidate message buffer. */
     pjsip_tx_data_invalidate_msg(tdata);
@@ -1387,6 +1406,9 @@ PJ_DEF(pj_status_t) pjsip_regc_send(pjsip_regc *regc, pjsip_tx_data *tdata)
 	regc->current_op = REGC_UNREGISTERING;
     else
 	regc->current_op = REGC_REGISTERING;
+    
+    if (expires_hdr && expires_hdr->ivalue)
+	regc->expires_requested = expires_hdr->ivalue;
 
     /* Prevent deletion of tdata, e.g: when something wrong in sending,
      * we need tdata to retrieve the transport.

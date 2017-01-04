@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: transport_srtp.c 5341 2016-06-10 04:04:09Z riza $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -30,10 +30,24 @@
 
 #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
 
+#if defined(PJ_HAS_SSL_SOCK) && (PJ_HAS_SSL_SOCK != 0)
+#  include <openssl/rand.h>
+
+/* Suppress compile warning of OpenSSL deprecation (OpenSSL is deprecated
+ * since MacOSX 10.7).
+ */
+#if defined(PJ_DARWINOS) && PJ_DARWINOS==1
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+#endif
+
 #if defined(PJMEDIA_EXTERNAL_SRTP) && (PJMEDIA_EXTERNAL_SRTP != 0)
 #  include <srtp/srtp.h>
+#  include <srtp/crypto_kernel.h>
 #else
 #  include <srtp.h>
+#  include <crypto_kernel.h>
 #endif
 
 #define THIS_FILE   "transport_srtp.c"
@@ -74,6 +88,22 @@ typedef struct crypto_suite
 static crypto_suite crypto_suites[] = {
     /* plain RTP/RTCP (no cipher & no auth) */
     {"NULL", NULL_CIPHER, 0, NULL_AUTH, 0, 0, 0, sec_serv_none},
+
+    /* cipher AES_CM_256, auth HMAC_SHA1, auth tag len = 10 octets */
+    {"AES_256_CM_HMAC_SHA1_80", AES_ICM, 46, HMAC_SHA1, 20, 10, 10,
+	sec_serv_conf_and_auth},
+
+    /* cipher AES_CM_256, auth HMAC_SHA1, auth tag len = 10 octets */
+    {"AES_256_CM_HMAC_SHA1_32", AES_ICM, 46, HMAC_SHA1, 20, 4, 10,
+        sec_serv_conf_and_auth},
+
+    /* cipher AES_CM_192, auth HMAC_SHA1, auth tag len = 10 octets */
+    //{"AES_192_CM_HMAC_SHA1_80", AES_ICM, 38, HMAC_SHA1, 20, 10, 10,
+	//sec_serv_conf_and_auth},
+
+    /* cipher AES_CM_192, auth HMAC_SHA1, auth tag len = 4 octets */
+    //{"AES_192_CM_HMAC_SHA1_80", AES_ICM, 38, HMAC_SHA1, 20, 4, 10,
+	//sec_serv_conf_and_auth},
 
     /* cipher AES_CM, auth HMAC_SHA1, auth tag len = 10 octets */
     {"AES_CM_128_HMAC_SHA1_80", AES_128_ICM, 30, HMAC_SHA1, 20, 10, 10,
@@ -323,7 +353,9 @@ static void pjmedia_srtp_deinit_lib(pjmedia_endpt *endpt)
 
     PJ_UNUSED_ARG(endpt);
 
-#if defined(PJMEDIA_EXTERNAL_SRTP) && (PJMEDIA_EXTERNAL_SRTP != 0)
+#if !defined(PJMEDIA_SRTP_HAS_DEINIT) && !defined(PJMEDIA_SRTP_HAS_SHUTDOWN)
+# define PJMEDIA_SRTP_HAS_SHUTDOWN 1
+#endif
 
 # if defined(PJMEDIA_SRTP_HAS_DEINIT) && PJMEDIA_SRTP_HAS_DEINIT!=0
     err = srtp_deinit();
@@ -332,10 +364,6 @@ static void pjmedia_srtp_deinit_lib(pjmedia_endpt *endpt)
 # else
     err = err_status_ok;
 # endif
-
-#else
-    err = srtp_deinit();
-#endif
     if (err != err_status_ok) {
 	PJ_LOG(4, (THIS_FILE, "Failed to deinitialize libsrtp: %s",
 		   get_libsrtp_errstr(err)));
@@ -1084,6 +1112,22 @@ static pj_status_t generate_crypto_attr_value(pj_pool_t *pool,
 	do {
 	    key_ok = PJ_TRUE;
 
+
+#if defined(PJ_HAS_SSL_SOCK) && (PJ_HAS_SSL_SOCK != 0)
+
+/* Include OpenSSL libraries for MSVC */
+#  ifdef _MSC_VER
+#    pragma comment( lib, "libeay32")
+#    pragma comment( lib, "ssleay32")
+#  endif
+
+	    err = RAND_bytes((unsigned char*)key,
+			     crypto_suites[cs_idx].cipher_key_len);
+	    if (err != 1) {
+		PJ_LOG(5,(THIS_FILE, "Failed generating random key"));
+		return PJMEDIA_ERRNO_FROM_LIBSRTP(1);
+	    }
+#else	    
 	    err = crypto_get_random((unsigned char*)key,
 				     crypto_suites[cs_idx].cipher_key_len);
 	    if (err != err_status_ok) {
@@ -1091,6 +1135,7 @@ static pj_status_t generate_crypto_attr_value(pj_pool_t *pool,
 			  get_libsrtp_errstr(err)));
 		return PJMEDIA_ERRNO_FROM_LIBSRTP(err);
 	    }
+#endif
 	    for (i=0; i<crypto_suites[cs_idx].cipher_key_len && key_ok; ++i)
 		if (key[i] == 0) key_ok = PJ_FALSE;
 
@@ -1139,10 +1184,9 @@ static pj_status_t parse_attr_crypto(pj_pool_t *pool,
 {
     pj_str_t input;
     char *token;
-    pj_size_t token_len;
     pj_str_t tmp;
     pj_status_t status;
-    int itmp;
+    int itmp, token_len;
 
     pj_bzero(crypto, sizeof(*crypto));
     pj_strdup_with_null(pool, &input, &attr->value);
@@ -1340,8 +1384,17 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
 
 	/* Generate crypto attribute if not yet */
 	if (pjmedia_sdp_media_find_attr(m_loc, &ID_CRYPTO, NULL) == NULL) {
+	    /* Offer only current active crypto if any, otherwise offer all
+	     * crypto-suites in the setting.
+	     */
 	    for (i=0; i<srtp->setting.crypto_count; ++i) {
-		/* Offer crypto-suites based on setting. */
+		if (srtp->tx_policy.name.slen &&
+		    pj_stricmp(&srtp->tx_policy.name,
+			       &srtp->setting.crypto[i].name) != 0)
+		{
+		    continue;
+		}
+
 		buffer_len = MAXLEN;
 		status = generate_crypto_attr_value(srtp->pool, buffer, &buffer_len,
 						    &srtp->setting.crypto[i],
@@ -1417,6 +1470,9 @@ static pj_status_t transport_encode_sdp(pjmedia_transport *tp,
 				       &srtp->setting.crypto[j].name) == 0)
 			{
 			    int cs_idx = get_crypto_idx(&tmp_rx_crypto.name);
+			    
+	    		    if (cs_idx == -1)
+	    		        return PJMEDIA_SRTP_ENOTSUPCRYPTO;
 
 			    /* Force to use test key */
 			    /* bad keys for snom: */

@@ -1,4 +1,4 @@
-# $Id$
+# $Id: chat.py 4757 2014-02-21 07:53:31Z nanang $
 #
 # pjsua Python GUI Demo
 #

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sip_transport_tcp.c 5325 2016-05-31 00:18:46Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -164,7 +164,7 @@ static void tcp_perror(const char *sender, const char *title,
 
     pj_strerror(status, errmsg, sizeof(errmsg));
 
-    PJ_LOG(1,(sender, "%s: %s [code=%d]", title, errmsg, status));
+    PJ_LOG(3,(sender, "%s: %s [code=%d]", title, errmsg, status));
 }
 
 
@@ -251,6 +251,8 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
 					pjsip_tpfactory **p_factory
 					)
 {
+    enum { INFO_LEN = 100 };
+    char local_addr[PJ_INET6_ADDRSTRLEN+10];
     pj_pool_t *pool;
     pj_sock_t sock = PJ_INVALID_SOCKET;
     struct tcp_listener *listener;
@@ -258,6 +260,7 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
     pj_activesock_cb listener_cb;
     pj_sockaddr *listener_addr;
     int addr_len;
+    pj_bool_t has_listener = PJ_FALSE;
     pj_status_t status;
 
     /* Sanity check */
@@ -278,7 +281,7 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
 	}
     }
 
-    pool = pjsip_endpt_create_pool(endpt, "tcplis", POOL_LIS_INIT, 
+    pool = pjsip_endpt_create_pool(endpt, "tcptp", POOL_LIS_INIT, 
 				   POOL_LIS_INC);
     PJ_ASSERT_RETURN(pool, PJ_ENOMEM);
 
@@ -297,7 +300,7 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
     pj_memcpy(&listener->sockopt_params, &cfg->sockopt_params,
 	      sizeof(cfg->sockopt_params));
 
-    pj_ansi_strcpy(listener->factory.obj_name, "tcplis");
+    pj_ansi_strcpy(listener->factory.obj_name, "tcptp");
     if (listener->factory.type==PJSIP_TRANSPORT_TCP6)
 	pj_ansi_strcat(listener->factory.obj_name, "6");
 
@@ -306,6 +309,8 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
     if (status != PJ_SUCCESS)
 	goto on_error;
 
+#if !(defined(PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER) && \
+      PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER != 0)
 
     /* Create socket */
     status = pj_sock_socket(cfg->af, pj_SOCK_STREAM(), 0, &sock);
@@ -332,6 +337,10 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
     if (cfg->sockopt_params.cnt)
 	status = pj_sock_setsockopt_params(sock, &cfg->sockopt_params);
 
+#else
+    PJ_UNUSED_ARG(addr_len);
+#endif
+
     /* Bind address may be different than factory.local_addr because
      * factory.local_addr will be resolved below.
      */
@@ -340,6 +349,9 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
     /* Bind socket */
     listener_addr = &listener->factory.local_addr;
     pj_sockaddr_cp(listener_addr, &cfg->bind_addr);
+
+#if !(defined(PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER) && \
+      PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER != 0)
 
     status = pj_sock_bind(sock, listener_addr, 
 			  pj_sockaddr_get_len(listener_addr));
@@ -351,6 +363,8 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
     status = pj_sock_getsockname(sock, listener_addr, &addr_len);
     if (status != PJ_SUCCESS)
 	goto on_error;
+
+#endif
 
     /* If published host/IP is specified, then use that address as the
      * listener advertised address.
@@ -392,8 +406,11 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
 
     pj_ansi_snprintf(listener->factory.obj_name, 
 		     sizeof(listener->factory.obj_name),
-		     "tcplis:%d",  listener->factory.addr_name.port);
+		     "tcptp:%d",  listener->factory.addr_name.port);
 
+
+#if !(defined(PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER) && \
+      PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER != 0)
 
     /* Start listening to the address */
     status = pj_sock_listen(sock, PJSIP_TCP_TRANSPORT_BACKLOG);
@@ -408,6 +425,8 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
     else
 	asock_cfg.async_cnt = cfg->async_cnt;
 
+#endif
+
     /* Create group lock */
     status = pj_grp_lock_create(pool, NULL, &listener->grp_lock);
     if (status != PJ_SUCCESS)
@@ -421,10 +440,16 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
 
     pj_bzero(&listener_cb, sizeof(listener_cb));
     listener_cb.on_accept_complete = &on_accept_complete;
+
+#if !(defined(PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER) && \
+      PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER != 0)
+
     status = pj_activesock_create(pool, sock, pj_SOCK_STREAM(), &asock_cfg,
 				  pjsip_endpt_get_ioqueue(endpt), 
 				  &listener_cb, listener,
 				  &listener->asock);
+
+#endif
 
     /* Register to transport manager */
     listener->endpt = endpt;
@@ -439,16 +464,41 @@ PJ_DEF(pj_status_t) pjsip_tcp_transport_start3(
 	goto on_error;
     }
 
+#if !(defined(PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER) && \
+      PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER != 0)
+
     /* Start pending accept() operations */
     status = pj_activesock_start_accept(listener->asock, pool);
     if (status != PJ_SUCCESS)
 	goto on_error;
+	
+    has_listener = PJ_TRUE;
 
-    PJ_LOG(4,(listener->factory.obj_name, 
-	     "SIP TCP listener ready for incoming connections at %.*s:%d",
-	     (int)listener->factory.addr_name.host.slen,
-	     listener->factory.addr_name.host.ptr,
-	     listener->factory.addr_name.port));
+#endif
+
+    /* Set transport info. */
+    if (listener->factory.info == NULL) {
+	listener->factory.info = (char*) pj_pool_alloc(listener->factory.pool,
+						       INFO_LEN);
+    }
+    pj_sockaddr_print(listener_addr, local_addr, sizeof(local_addr), 3);
+    pj_ansi_snprintf( 
+	listener->factory.info, INFO_LEN, "tcp %s [published as %.*s:%d]",
+	local_addr,
+	(int)listener->factory.addr_name.host.slen,
+	listener->factory.addr_name.host.ptr,
+	listener->factory.addr_name.port);
+
+    if (has_listener) {
+        PJ_LOG(4,(listener->factory.obj_name, 
+	         "SIP TCP listener ready for incoming connections at %.*s:%d",
+	         (int)listener->factory.addr_name.host.slen,
+	         listener->factory.addr_name.host.ptr,
+	         listener->factory.addr_name.port));
+    } else {
+	PJ_LOG(4,(listener->factory.obj_name, "SIP TCP is ready "
+		  "(client only)"));    
+    }
 
     /* Return the pointer to user */
     if (p_factory) *p_factory = &listener->factory;
@@ -518,7 +568,7 @@ static void lis_on_destroy(void *arg)
     if (listener->factory.pool) {
 	pj_pool_t *pool = listener->factory.pool;
 
-	PJ_LOG(4,(listener->factory.obj_name,  "SIP TCP listener destroyed"));
+	PJ_LOG(4,(listener->factory.obj_name,  "SIP TCP transport destroyed"));
 
 	listener->factory.pool = NULL;
 	pj_pool_release(pool);
@@ -678,6 +728,7 @@ static pj_status_t tcp_create( struct tcp_listener *listener,
     tcp->base.send_msg = &tcp_send_msg;
     tcp->base.do_shutdown = &tcp_shutdown;
     tcp->base.destroy = &tcp_destroy_transport;
+    tcp->base.factory = &listener->factory;
 
     /* Create group lock */
     status = pj_grp_lock_create(pool, NULL, &tcp->grp_lock);
@@ -1086,7 +1137,8 @@ static pj_bool_t on_accept_complete(pj_activesock_t *asock,
     struct tcp_transport *tcp;
     char addr[PJ_INET6_ADDRSTRLEN+10];
     pjsip_tp_state_callback state_cb;
-    pj_sockaddr tmp_src_addr;
+    pj_sockaddr tmp_src_addr, tmp_dst_addr;
+    int addr_len;
     pj_status_t status;
 
     PJ_UNUSED_ARG(src_addr_len);
@@ -1094,6 +1146,9 @@ static pj_bool_t on_accept_complete(pj_activesock_t *asock,
     listener = (struct tcp_listener*) pj_activesock_get_user_data(asock);
 
     PJ_ASSERT_RETURN(sock != PJ_INVALID_SOCKET, PJ_TRUE);
+
+    if (!listener->is_registered)
+	return PJ_FALSE;
 
     PJ_LOG(4,(listener->factory.obj_name, 
 	      "TCP listener %.*s:%d: got incoming TCP connection "
@@ -1120,34 +1175,43 @@ static pj_bool_t on_accept_complete(pj_activesock_t *asock,
     pj_bzero(&tmp_src_addr, sizeof(tmp_src_addr));
     pj_sockaddr_cp(&tmp_src_addr, src_addr);
 
+    /* Get local address */
+    addr_len = sizeof(tmp_dst_addr);
+    status = pj_sock_getsockname(sock, &tmp_dst_addr, &addr_len);
+    if (status != PJ_SUCCESS) {
+	pj_sockaddr_cp(&tmp_dst_addr, &listener->factory.local_addr);
+    }
+
     /* 
      * Incoming connection!
      * Create TCP transport for the new socket.
      */
     status = tcp_create( listener, NULL, sock, PJ_TRUE,
-			 &listener->factory.local_addr,
-			 &tmp_src_addr, &tcp);
+			 &tmp_dst_addr, &tmp_src_addr, &tcp);
     if (status == PJ_SUCCESS) {
 	status = tcp_start_read(tcp);
 	if (status != PJ_SUCCESS) {
 	    PJ_LOG(3,(tcp->base.obj_name, "New transport cancelled"));
 	    tcp_destroy(&tcp->base, status);
 	} else {
+	    if (tcp->base.is_shutdown || tcp->base.is_destroying) {
+		return PJ_TRUE;
+	    }
 	    /* Start keep-alive timer */
-	    if (PJSIP_TCP_KEEP_ALIVE_INTERVAL) {
-		pj_time_val delay = {PJSIP_TCP_KEEP_ALIVE_INTERVAL, 0};
+	    if (pjsip_cfg()->tcp.keep_alive_interval) {
+		pj_time_val delay = { 0 };
+		delay.sec = pjsip_cfg()->tcp.keep_alive_interval;
 		pjsip_endpt_schedule_timer(listener->endpt, 
 					   &tcp->ka_timer, 
 					   &delay);
 		tcp->ka_timer.id = PJ_TRUE;
 		pj_gettimeofday(&tcp->last_activity);
 	    }
-
 	    /* Notify application of transport state accepted */
 	    state_cb = pjsip_tpmgr_get_state_cb(tcp->base.tpmgr);
 	    if (state_cb) {
 		pjsip_transport_state_info state_info;
-            
+
 		pj_bzero(&state_info, sizeof(state_info));
 		(*state_cb)(&tcp->base, PJSIP_TP_STATE_CONNECTED, &state_info);
 	    }
@@ -1422,6 +1486,17 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
     /* Mark that pending connect() operation has completed. */
     tcp->has_pending_connect = PJ_FALSE;
 
+    /* If transport is being shutdown/destroyed, proceed as error connect.
+     * Note that it is important to notify application via on_data_sent()
+     * as otherwise the transport reference counter may never reach zero
+     * (see #1898).
+     */
+    if ((tcp->base.is_shutdown || tcp->base.is_destroying) &&
+	status == PJ_SUCCESS)
+    {
+	status = PJ_ECANCELLED;
+    }
+
     /* Check connect() status */
     if (status != PJ_SUCCESS) {
 
@@ -1482,7 +1557,7 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
     state_cb = pjsip_tpmgr_get_state_cb(tcp->base.tpmgr);
     if (state_cb) {
 	pjsip_transport_state_info state_info;
-    
+	
 	pj_bzero(&state_info, sizeof(state_info));
 	(*state_cb)(&tcp->base, PJSIP_TP_STATE_CONNECTED, &state_info);
     }
@@ -1491,8 +1566,9 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
     tcp_flush_pending_tx(tcp);
 
     /* Start keep-alive timer */
-    if (PJSIP_TCP_KEEP_ALIVE_INTERVAL) {
-	pj_time_val delay = { PJSIP_TCP_KEEP_ALIVE_INTERVAL, 0 };
+    if (pjsip_cfg()->tcp.keep_alive_interval) {
+	pj_time_val delay = { 0 };
+	delay.sec = pjsip_cfg()->tcp.keep_alive_interval;
 	pjsip_endpt_schedule_timer(tcp->base.endpt, &tcp->ka_timer, 
 				   &delay);
 	tcp->ka_timer.id = PJ_TRUE;
@@ -1518,9 +1594,9 @@ static void tcp_keep_alive_timer(pj_timer_heap_t *th, pj_timer_entry *e)
     pj_gettimeofday(&now);
     PJ_TIME_VAL_SUB(now, tcp->last_activity);
 
-    if (now.sec > 0 && now.sec < PJSIP_TCP_KEEP_ALIVE_INTERVAL) {
+    if (now.sec > 0 && now.sec < pjsip_cfg()->tcp.keep_alive_interval) {
 	/* There has been activity, so don't send keep-alive */
-	delay.sec = PJSIP_TCP_KEEP_ALIVE_INTERVAL - now.sec;
+	delay.sec = pjsip_cfg()->tcp.keep_alive_interval - now.sec;
 	delay.msec = 0;
 
 	pjsip_endpt_schedule_timer(tcp->base.endpt, &tcp->ka_timer, 
@@ -1547,7 +1623,7 @@ static void tcp_keep_alive_timer(pj_timer_heap_t *th, pj_timer_entry *e)
     }
 
     /* Register next keep-alive */
-    delay.sec = PJSIP_TCP_KEEP_ALIVE_INTERVAL;
+    delay.sec = pjsip_cfg()->tcp.keep_alive_interval;
     delay.msec = 0;
 
     pjsip_endpt_schedule_timer(tcp->base.endpt, &tcp->ka_timer, 

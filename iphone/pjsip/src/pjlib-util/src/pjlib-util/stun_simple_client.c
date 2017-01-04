@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: stun_simple_client.c 5311 2016-05-20 04:17:00Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -19,6 +19,7 @@
  */
 #include <pjlib-util/stun_simple.h>
 #include <pjlib-util/errno.h>
+#include <pj/compat/socket.h> 
 #include <pj/log.h>
 #include <pj/os.h>
 #include <pj/pool.h>
@@ -32,7 +33,6 @@ static int stun_timer[] = {500, 500, 500, 500 };
 #define STUN_MAGIC 0x2112A442
 
 #define THIS_FILE	"stun_client.c"
-#define LOG_ADDR(addr)	pj_inet_ntoa(addr.sin_addr), pj_ntohs(addr.sin_port)
 
 #define TRACE_(x)	PJ_LOG(6,x)
 
@@ -152,7 +152,7 @@ PJ_DEF(pj_status_t) pjstun_get_mapped_addr2(pj_pool_factory *pf,
 	}
     }
 #else
-    nfds = PJ_IOQUEUE_MAX_HANDLES-1;
+    nfds = FD_SETSIZE-1;
 #endif
 
     /* Main retransmission loop. */

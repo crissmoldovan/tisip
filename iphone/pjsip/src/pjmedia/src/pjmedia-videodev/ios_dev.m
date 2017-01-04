@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ios_dev.m 5166 2015-08-21 06:46:32Z ming $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#include "util.h"
 #include <pjmedia-videodev/videodev_imp.h>
 #include <pj/assert.h>
 #include <pj/log.h>
@@ -37,6 +38,11 @@
 #define DEFAULT_HEIGHT		288
 #define DEFAULT_FPS		15
 
+/* Define whether we should maintain the aspect ratio when rotating the image.
+ * For more details, please refer to util.h.
+ */
+#define MAINTAIN_ASPECT_RATIO 	PJ_TRUE
+
 typedef struct ios_fmt_info
 {
     pjmedia_format_id   pjmedia_format;
@@ -49,14 +55,30 @@ static ios_fmt_info ios_fmts[] =
     { PJMEDIA_FORMAT_I420, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange }
 };
 
-/* qt device info */
+typedef struct ios_supported_size
+{
+    pj_size_t supported_size_w;
+    pj_size_t supported_size_h;
+    NSString *preset_str;
+} ios_supported_size;
+
+/* Set the preset_str on set_preset_str method. */
+static ios_supported_size ios_sizes[] =
+{
+    { 352, 288, NULL },
+    { 640, 480, NULL },
+    { 1280, 720, NULL },
+    { 1920, 1080, NULL }
+};
+
+/* ios device info */
 struct ios_dev_info
 {
     pjmedia_vid_dev_info	 info;
     AVCaptureDevice             *dev;
 };
 
-/* qt factory */
+/* ios factory */
 struct ios_factory
 {
     pjmedia_vid_dev_factory	 base;
@@ -90,12 +112,18 @@ struct ios_stream
     unsigned		    bytes_per_row;
     unsigned		    frame_size;         /**< Frame size (bytes)*/
     pj_bool_t               is_planar;
+    NSLock 		   *frame_lock;
+    void                   *capture_buf;
+    void		   *frame_buf;
+    
+    pjmedia_vid_dev_conv    conv;
+    pjmedia_rect_size	    vid_size;
     
     AVCaptureSession		*cap_session;
     AVCaptureDeviceInput	*dev_input;
     AVCaptureVideoDataOutput	*video_output;
     VOutDelegate		*vout_delegate;
-    void                        *capture_buf;
+    dispatch_queue_t 		 queue;
     AVCaptureVideoPreviewLayer  *prev_layer;
     
     void		*render_buf;
@@ -105,10 +133,6 @@ struct ios_stream
     
     pj_timestamp	 frame_ts;
     unsigned		 ts_inc;
-
-    pj_bool_t		 thread_initialized;
-    pj_thread_desc	 thread_desc;
-    pj_thread_t		*thread;
 };
 
 
@@ -140,6 +164,8 @@ static pj_status_t ios_stream_set_cap(pjmedia_vid_dev_stream *strm,
 				      pjmedia_vid_dev_cap cap,
 				      const void *value);
 static pj_status_t ios_stream_start(pjmedia_vid_dev_stream *strm);
+static pj_status_t ios_stream_get_frame(pjmedia_vid_dev_stream *strm,
+                                        pjmedia_frame *frame);
 static pj_status_t ios_stream_put_frame(pjmedia_vid_dev_stream *strm,
 					const pjmedia_frame *frame);
 static pj_status_t ios_stream_stop(pjmedia_vid_dev_stream *strm);
@@ -163,12 +189,19 @@ static pjmedia_vid_dev_stream_op stream_op =
     &ios_stream_get_cap,
     &ios_stream_set_cap,
     &ios_stream_start,
-    NULL,
+    &ios_stream_get_frame,
     &ios_stream_put_frame,
     &ios_stream_stop,
     &ios_stream_destroy
 };
 
+static void set_preset_str()
+{
+    ios_sizes[0].preset_str = AVCaptureSessionPreset352x288;
+    ios_sizes[1].preset_str = AVCaptureSessionPreset640x480;
+    ios_sizes[2].preset_str = AVCaptureSessionPreset1280x720;
+    ios_sizes[3].preset_str = AVCaptureSessionPreset1920x1080;
+}
 
 /****************************************************************************
  * Factory operations
@@ -198,6 +231,8 @@ static pj_status_t ios_factory_init(pjmedia_vid_dev_factory *f)
     struct ios_dev_info *qdi;
     unsigned i, l, first_idx, front_idx = -1;
     enum { MAX_DEV_COUNT = 8 };
+    
+    set_preset_str();
     
     /* Initialize input and output devices here */
     qf->dev_info = (struct ios_dev_info*)
@@ -235,7 +270,7 @@ static pj_status_t ios_factory_init(pjmedia_vid_dev_factory *f)
                             sizeof(qdi->info.name));
             pj_ansi_strncpy(qdi->info.driver, "iOS", sizeof(qdi->info.driver));
             qdi->info.dir = PJMEDIA_DIR_CAPTURE;
-            qdi->info.has_callback = PJ_TRUE;
+            qdi->info.has_callback = PJ_FALSE;
             qdi->info.caps = PJMEDIA_VID_DEV_CAP_INPUT_PREVIEW |
 		    	     PJMEDIA_VID_DEV_CAP_SWITCH;
             qdi->dev = device;
@@ -268,13 +303,43 @@ static pj_status_t ios_factory_init(pjmedia_vid_dev_factory *f)
             {
                 continue;
             }
+            
+            if (qdi->info.dir == PJMEDIA_DIR_RENDER) {
+                fmt = &qdi->info.fmt[qdi->info.fmt_cnt++];
+                pjmedia_format_init_video(fmt,
+                                          ios_fmts[l].pjmedia_format,
+                                          DEFAULT_WIDTH,
+                                          DEFAULT_HEIGHT,
+                                          DEFAULT_FPS, 1);
+            } else {
+                int m;
+                AVCaptureDevice *dev = qdi->dev;
                 
-	    fmt = &qdi->info.fmt[qdi->info.fmt_cnt++];
-	    pjmedia_format_init_video(fmt,
-				      ios_fmts[l].pjmedia_format,
-				      DEFAULT_WIDTH,
-				      DEFAULT_HEIGHT,
-				      DEFAULT_FPS, 1);	
+                /* Set supported size for capture device */
+                for(m = 0; m < PJ_ARRAY_SIZE(ios_sizes) &&
+                           qdi->info.fmt_cnt<PJMEDIA_VID_DEV_INFO_FMT_CNT;
+                    m++)
+                {
+                    if ([dev supportsAVCaptureSessionPreset:
+                                                       ios_sizes[m].preset_str])
+                    {
+                        /* Landscape video */
+                        fmt = &qdi->info.fmt[qdi->info.fmt_cnt++];
+                        pjmedia_format_init_video(fmt,
+                                                  ios_fmts[l].pjmedia_format,
+                                                  ios_sizes[m].supported_size_w,
+                                                  ios_sizes[m].supported_size_h,
+                                                  DEFAULT_FPS, 1);
+                        /* Portrait video */
+                        fmt = &qdi->info.fmt[qdi->info.fmt_cnt++];
+                        pjmedia_format_init_video(fmt,
+                                                  ios_fmts[l].pjmedia_format,
+                                                  ios_sizes[m].supported_size_h,
+                                                  ios_sizes[m].supported_size_w,
+                                                  DEFAULT_FPS, 1);
+                    }
+                }                
+            }
 	}
     }
     
@@ -387,8 +452,16 @@ static pj_status_t ios_factory_default_param(pj_pool_t *pool,
 		      didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 		      fromConnection:(AVCaptureConnection *)connection
 {
-    pjmedia_frame frame = {0};
     CVImageBufferRef img;
+    pj_status_t status;
+    void *frame_buf;
+
+    /* Refrain from calling pjlib functions which require thread registration
+     * here, since according to the doc, dispatch queue cannot guarantee
+     * the reliability of underlying functions required by PJSIP to perform
+     * the registration, such as pthread_self() and pthread_getspecific()/
+     * pthread_setspecific().
+     */
 
     if (!sampleBuffer)
 	return;
@@ -398,56 +471,104 @@ static pj_status_t ios_factory_default_param(pj_pool_t *pool,
     
     /* Lock the base address of the pixel buffer */
     CVPixelBufferLockBaseAddress(img, kCVPixelBufferLock_ReadOnly);
-    
-    frame.type = PJMEDIA_FRAME_TYPE_VIDEO;
-    frame.size = stream->frame_size;
-    frame.timestamp.u64 = stream->frame_ts.u64;
 
+    [stream->frame_lock lock];
     if (stream->is_planar && stream->capture_buf) {
         if (stream->param.fmt.id == PJMEDIA_FORMAT_I420) {
             /* kCVPixelFormatType_420YpCbCr8BiPlanar* is NV12 */
             pj_uint8_t *p, *p_end, *Y, *U, *V;
             pj_size_t p_len;
+            /* Image stride is not always equal to the image width. I.e on Ipad
+             * air, at 352*288 the image stride is 384.
+             */
+            pj_size_t stride = CVPixelBufferGetBytesPerRowOfPlane(img, 0);
+            pj_size_t height = CVPixelBufferGetHeight(img);
+            pj_bool_t need_clip;
+            
+            /* Auto detect rotation */
+            if (height != stream->vid_size.h) {
+                stream->vid_size.w = stream->vid_size.h;
+                stream->vid_size.h = height;
+            }
+            
+            need_clip = (stride != stream->vid_size.w);
             
             p = (pj_uint8_t*)CVPixelBufferGetBaseAddressOfPlane(img, 0);
-            p_len = stream->size.w * stream->size.h;
+            p_len = stream->vid_size.w * stream->vid_size.h;
             Y = (pj_uint8_t*)stream->capture_buf;
             U = Y + p_len;
             V = U + p_len/4;
-            pj_memcpy(Y, p, p_len);
-            
-            p = (pj_uint8_t*)CVPixelBufferGetBaseAddressOfPlane(img, 1);
-            p_len >>= 1;
-            p_end = p + p_len;
-            while (p < p_end) {
-                *U++ = *p++;
-                *V++ = *p++;
+
+            if (!need_clip) {
+                pj_memcpy(Y, p, p_len);
+            } else {
+                int i = 0;
+                for (; i < stream->vid_size.h; ++i) {
+                    pj_memcpy(Y, p, stream->vid_size.w);
+                    Y += stream->vid_size.w;
+                    p += stride;
+                }
             }
 
-            frame.buf = stream->capture_buf;
+            p = (pj_uint8_t*)CVPixelBufferGetBaseAddressOfPlane(img, 1);
+            if (!need_clip) {
+                p_len >>= 1;
+                p_end = p + p_len;
+                
+                while (p < p_end) {
+                    *U++ = *p++;
+                    *V++ = *p++;
+                }
+            } else {
+                int i = 0;
+                for (;i<(stream->vid_size.h)/2;++i) {
+                    int y=0;
+                    for (;y<(stream->vid_size.w)/2;++y) {
+                        *U++ = *p++;
+                        *V++ = *p++;
+                    }
+                    p += (stride - stream->vid_size.w);
+                }
+            }
         }
     } else {
-        frame.buf = CVPixelBufferGetBaseAddress(img);
+        pj_memcpy(stream->capture_buf, CVPixelBufferGetBaseAddress(img),
+                  stream->frame_size);
     }
     
-    if (stream->vid_cb.capture_cb) {
-        if (stream->thread_initialized == 0 || !pj_thread_is_registered())
-        {
-            pj_bzero(stream->thread_desc, sizeof(pj_thread_desc));
-            pj_thread_register("ios_vdev", stream->thread_desc,
-                               &stream->thread);
-            stream->thread_initialized = 1;
-        }
-
-        (*stream->vid_cb.capture_cb)(&stream->base, stream->user_data, &frame);
+    status = pjmedia_vid_dev_conv_resize_and_rotate(&stream->conv, 
+    						    stream->capture_buf,
+    				       		    &frame_buf);
+    if (status == PJ_SUCCESS) {
+        stream->frame_buf = frame_buf;
     }
 
     stream->frame_ts.u64 += stream->ts_inc;
+    [stream->frame_lock unlock];
     
     /* Unlock the pixel buffer */
     CVPixelBufferUnlockBaseAddress(img, kCVPixelBufferLock_ReadOnly);
 }
 @end
+
+static pj_status_t ios_stream_get_frame(pjmedia_vid_dev_stream *strm,
+                                        pjmedia_frame *frame)
+{
+    struct ios_stream *stream = (struct ios_stream *)strm;
+
+    frame->type = PJMEDIA_FRAME_TYPE_VIDEO;
+    frame->bit_info = 0;
+    pj_assert(frame->size >= stream->frame_size);
+    frame->size = stream->frame_size;
+    frame->timestamp.u64 = stream->frame_ts.u64;
+    
+    [stream->frame_lock lock];
+    pj_memcpy(frame->buf, stream->frame_buf, stream->frame_size);
+    [stream->frame_lock unlock];
+    
+    return PJ_SUCCESS;
+}
+
 
 static ios_fmt_info* get_ios_format_info(pjmedia_format_id id)
 {
@@ -548,34 +669,41 @@ static pj_status_t ios_factory_create_stream(
     strm->is_planar = vfi->plane_cnt > 1;
 
     if (param->dir & PJMEDIA_DIR_CAPTURE) {
-        NSString *size_preset_str[] = {
-            AVCaptureSessionPreset352x288,
-            AVCaptureSessionPreset640x480,
-            AVCaptureSessionPreset1280x720,
-            AVCaptureSessionPreset1920x1080
-        };
-        pj_size_t supported_size_w[] = { 352, 640, 1280, 1920 };
-        pj_size_t supported_size_h[] = { 288, 480,  720, 1080 };
-        pj_size_t supported_size[] = { 352*288, 640*480, 1280*720, 1920*1080 };
-        pj_size_t requested_size = strm->size.w * strm->size.h;
         int i;
-        
+	        
         /* Create capture stream here */
 	strm->cap_session = [[AVCaptureSession alloc] init];
 	if (!strm->cap_session) {
+	    PJ_LOG(2, (THIS_FILE, "Unable to create AV capture session"));
 	    status = PJ_ENOMEM;
 	    goto on_error;
 	}
-        
-	/* Find the closest supported size */
-        for(i = 0; i < PJ_ARRAY_SIZE(supported_size)-1; ++i) {
-            if (supported_size[i] >= requested_size)
+        AVCaptureDevice *dev = qf->dev_info[param->cap_id].dev;
+ 
+        for (i = PJ_ARRAY_SIZE(ios_sizes)-1; i > 0; --i) {
+            if (((vfd->size.w == ios_sizes[i].supported_size_w) &&
+                 (vfd->size.h == ios_sizes[i].supported_size_h)) ||
+                ((vfd->size.w == ios_sizes[i].supported_size_h) &&
+                 (vfd->size.h == ios_sizes[i].supported_size_w)))
+            {
                 break;
+            }
         }
-        strm->cap_session.sessionPreset = size_preset_str[i];
-        vfd->size.w = supported_size_w[i];
-        vfd->size.h = supported_size_h[i];
+        
+        strm->cap_session.sessionPreset = ios_sizes[i].preset_str;
+        
+        /* If the requested size is portrait (or landscape), we make
+         * our natural orientation portrait (or landscape) as well.
+         */
+        if (vfd->size.w > vfd->size.h) {
+            vfd->size.w = ios_sizes[i].supported_size_w;
+            vfd->size.h = ios_sizes[i].supported_size_h;
+        } else {
+            vfd->size.h = ios_sizes[i].supported_size_w;
+            vfd->size.w = ios_sizes[i].supported_size_h;
+        }
         strm->size = vfd->size;
+        strm->vid_size = vfd->size;
         strm->bytes_per_row = strm->size.w * vfi->bpp / 8;
         strm->frame_size = strm->bytes_per_row * strm->size.h;
         
@@ -583,7 +711,6 @@ static pj_status_t ios_factory_create_stream(
         param->fmt = strm->param.fmt;
 
         /* Set frame rate, this may only work on iOS 7 or later */
-        AVCaptureDevice *dev = qf->dev_info[param->cap_id].dev;
         if ([dev respondsToSelector:@selector(activeVideoMinFrameDuration)] &&
             [dev lockForConfiguration:NULL])
         {
@@ -599,43 +726,70 @@ static pj_status_t ios_factory_create_stream(
 	strm->dev_input = [AVCaptureDeviceInput
 			   deviceInputWithDevice:dev
 			   error: &error];
-	if (!strm->dev_input) {
+	if (error || !strm->dev_input) {
+	    PJ_LOG(2, (THIS_FILE, "Unable to get input capture device"));
 	    status = PJMEDIA_EVID_SYSERR;
 	    goto on_error;
 	}
-	[strm->cap_session addInput:strm->dev_input];
 	
-	strm->video_output = [[[AVCaptureVideoDataOutput alloc] init]
-			      autorelease];
-	if (!strm->video_output) {
+	if ([strm->cap_session canAddInput:strm->dev_input]) {
+	    [strm->cap_session addInput:strm->dev_input];
+	} else {
+	    PJ_LOG(2, (THIS_FILE, "Unable to add input capture device"));
 	    status = PJMEDIA_EVID_SYSERR;
+	    goto on_error;
+	}
+	
+	strm->video_output = [[AVCaptureVideoDataOutput alloc] init];
+	if (!strm->video_output) {
+	    PJ_LOG(2, (THIS_FILE, "Unable to create AV video output"));
+	    status = PJ_ENOMEM;
 	    goto on_error;
 	}
         
-        strm->video_output.alwaysDiscardsLateVideoFrames = YES;
-	[strm->cap_session addOutput:strm->video_output];
-	
 	/* Configure the video output */
-	strm->vout_delegate = [VOutDelegate alloc];
-	strm->vout_delegate->stream = strm;
-	dispatch_queue_t queue = dispatch_queue_create("myQueue", NULL);
-	[strm->video_output setSampleBufferDelegate:strm->vout_delegate
-                                              queue:queue];
-	dispatch_release(queue);
-	
+        strm->video_output.alwaysDiscardsLateVideoFrames = YES;
 	strm->video_output.videoSettings =
 	    [NSDictionary dictionaryWithObjectsAndKeys:
 			  [NSNumber numberWithInt:ifi->ios_format],
 			  kCVPixelBufferPixelFormatTypeKey, nil];
+
+	strm->vout_delegate = [VOutDelegate alloc];
+	strm->vout_delegate->stream = strm;
+	strm->queue = dispatch_queue_create("vout_queue",
+					    DISPATCH_QUEUE_SERIAL);
+	[strm->video_output setSampleBufferDelegate:strm->vout_delegate
+                            queue:strm->queue];
         
-        /* Prepare capture buffer if it's planar format */
-        if (strm->is_planar)
-            strm->capture_buf = pj_pool_alloc(strm->pool, strm->frame_size);
-        
+        if ([strm->cap_session canAddOutput:strm->video_output]) {
+	    [strm->cap_session addOutput:strm->video_output];
+	} else {
+	    PJ_LOG(2, (THIS_FILE, "Unable to add video data output"));
+	    status = PJMEDIA_EVID_SYSERR;
+	    goto on_error;
+	}
+	
+	strm->capture_buf = pj_pool_alloc(strm->pool, strm->frame_size);
+	strm->frame_buf = strm->capture_buf;
+	strm->frame_lock = [[NSLock alloc]init];
+	
         /* Native preview */
         if (param->flags & PJMEDIA_VID_DEV_CAP_INPUT_PREVIEW) {
             ios_stream_set_cap(&strm->base, PJMEDIA_VID_DEV_CAP_INPUT_PREVIEW,
                                &param->native_preview);
+        }
+
+        /* Video orientation.
+         * If we send in portrait, we need to set up orientation converter
+         * as well.
+         */
+        if ((param->flags & PJMEDIA_VID_DEV_CAP_ORIENTATION) ||
+            (vfd->size.h > vfd->size.w))
+        {
+            if (param->orient == PJMEDIA_ORIENT_UNKNOWN)
+                param->orient = PJMEDIA_ORIENT_NATURAL;
+            ios_stream_set_cap(&strm->base, PJMEDIA_VID_DEV_CAP_ORIENTATION,
+                               &param->orient);
         }
         
     } else if (param->dir & PJMEDIA_DIR_RENDER) {
@@ -750,14 +904,13 @@ static pj_status_t ios_stream_set_cap(pjmedia_vid_dev_stream *s,
             /* Create view, if none */
 	    if (!strm->render_view)
 	        ios_init_view(strm);
-	    
             
             /* Preview layer instantiation should be in main thread! */
             dispatch_async(dispatch_get_main_queue(), ^{
                 /* Create preview layer */
                 AVCaptureVideoPreviewLayer *prev_layer =
-                            [AVCaptureVideoPreviewLayer
-                             layerWithSession:strm->cap_session];
+                            [[AVCaptureVideoPreviewLayer alloc]
+                             initWithSession:strm->cap_session];
                 
                 /* Attach preview layer to a UIView */
                 prev_layer.videoGravity = AVLayerVideoGravityResize;
@@ -808,6 +961,10 @@ static pj_status_t ios_stream_set_cap(pjmedia_vid_dev_stream *s,
             
             strm->dev_input = new_dev_input;
             strm->param.cap_id = p->target_id;
+            
+            /* Set the orientation as well */
+            ios_stream_set_cap(s, PJMEDIA_VID_DEV_CAP_ORIENTATION,
+            		       &strm->param.orient);
             
             return PJ_SUCCESS;
         }
@@ -895,19 +1052,84 @@ static pj_status_t ios_stream_set_cap(pjmedia_vid_dev_stream *s,
             return PJ_SUCCESS;
         }
             
-        /* TODO: orientation for capture device */
         case PJMEDIA_VID_DEV_CAP_ORIENTATION:
         {
+            pjmedia_orient orient = *(pjmedia_orient *)pval;
+
+	    pj_assert(orient >= PJMEDIA_ORIENT_UNKNOWN &&
+	              orient <= PJMEDIA_ORIENT_ROTATE_270DEG);
+
+            if (orient == PJMEDIA_ORIENT_UNKNOWN)
+                return PJ_EINVAL;
+
             pj_memcpy(&strm->param.orient, pval,
                       sizeof(strm->param.orient));
-            if (strm->param.orient == PJMEDIA_ORIENT_UNKNOWN)
-                return PJ_SUCCESS;
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                strm->render_view.transform =
-                    CGAffineTransformMakeRotation(
-                        ((int)strm->param.orient-1) * -M_PI_2);
-            });
+        
+            if (strm->param.dir == PJMEDIA_DIR_RENDER) {
+            	dispatch_async(dispatch_get_main_queue(), ^{
+                    strm->render_view.transform =
+                        CGAffineTransformMakeRotation(
+                            ((int)strm->param.orient-1) * -M_PI_2);
+                });
+
+		return PJ_SUCCESS;
+            }
+        
+            const AVCaptureVideoOrientation cap_ori[4] =
+            {
+   		AVCaptureVideoOrientationLandscapeLeft,      /* NATURAL */
+        	AVCaptureVideoOrientationPortrait,           /* 90DEG   */
+   		AVCaptureVideoOrientationLandscapeRight,     /* 180DEG  */
+   		AVCaptureVideoOrientationPortraitUpsideDown, /* 270DEG  */
+            };
+	    AVCaptureConnection *vidcon;
+	    pj_bool_t support_ori = PJ_TRUE;
+	    
+	    pj_assert(strm->param.dir == PJMEDIA_DIR_CAPTURE);
+	    
+	    if (!strm->video_output)
+	        return PJMEDIA_EVID_NOTREADY;
+
+	    vidcon = [strm->video_output 
+	              connectionWithMediaType:AVMediaTypeVideo];
+	    if ([vidcon isVideoOrientationSupported]) {
+	        vidcon.videoOrientation = cap_ori[strm->param.orient-1];
+	    } else {
+	        support_ori = PJ_FALSE;
+	    }
+	    
+	    if (!strm->conv.conv) {
+	        pj_status_t status;
+	        pjmedia_rect_size orig_size;
+
+	        /* Original native size of device is landscape */
+	        orig_size.w = (strm->size.w > strm->size.h? strm->size.w :
+	        	       strm->size.h);
+	        orig_size.h = (strm->size.w > strm->size.h? strm->size.h :
+	        	       strm->size.w);
+
+		if (!support_ori) {
+	            PJ_LOG(4, (THIS_FILE, "Native video capture orientation " 
+	        		          "unsupported, will use converter's "
+	        		          "rotation."));
+	        }
+
+	        status = pjmedia_vid_dev_conv_create_converter(
+	        				 &strm->conv, strm->pool,
+	        		        	 &strm->param.fmt,
+	        		        	 orig_size, strm->size,
+	        		        	 (support_ori?PJ_FALSE:PJ_TRUE),
+	        		        	 MAINTAIN_ASPECT_RATIO);
+	    	
+	    	if (status != PJ_SUCCESS)
+	    	    return status;
+	    }
+	    
+	    pjmedia_vid_dev_conv_set_rotation(&strm->conv, strm->param.orient);
+	    
+	    PJ_LOG(5, (THIS_FILE, "Video capture orientation set to %d",
+	    			  strm->param.orient));
+
             return PJ_SUCCESS;
         }
         
@@ -936,8 +1158,10 @@ static pj_status_t ios_stream_start(pjmedia_vid_dev_stream *strm)
             });
         }
     
-	if (![stream->cap_session isRunning])
+	if (![stream->cap_session isRunning]) {
+	    PJ_LOG(3, (THIS_FILE, "Unable to start iOS capture session"));
 	    return PJ_EUNKNOWN;
+	}
     }
     
     return PJ_SUCCESS;
@@ -949,7 +1173,7 @@ static pj_status_t ios_stream_put_frame(pjmedia_vid_dev_stream *strm,
 					const pjmedia_frame *frame)
 {
     struct ios_stream *stream = (struct ios_stream*)strm;
-    
+
     if (stream->frame_size >= frame->size)
         pj_memcpy(stream->render_buf, frame->buf, frame->size);
     else
@@ -968,18 +1192,17 @@ static pj_status_t ios_stream_stop(pjmedia_vid_dev_stream *strm)
 {
     struct ios_stream *stream = (struct ios_stream*)strm;
 
-    PJ_UNUSED_ARG(stream);
-
+    if (!stream->cap_session || ![stream->cap_session isRunning])
+        return PJ_SUCCESS;
+    
     PJ_LOG(4, (THIS_FILE, "Stopping iOS video stream"));
 
-    if (stream->cap_session && [stream->cap_session isRunning]) {
-        if ([NSThread isMainThread]) {
+    if ([NSThread isMainThread]) {
+	[stream->cap_session stopRunning];
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), ^{
             [stream->cap_session stopRunning];
-        } else {
-            dispatch_sync(dispatch_get_main_queue(), ^{
-                [stream->cap_session stopRunning];
-            });
-        }
+        });
     }
     
     return PJ_SUCCESS;
@@ -996,21 +1219,23 @@ static pj_status_t ios_stream_destroy(pjmedia_vid_dev_stream *strm)
     ios_stream_stop(strm);
     
     if (stream->cap_session) {
-        [stream->cap_session removeInput:stream->dev_input];
+        if (stream->dev_input) {
+            [stream->cap_session removeInput:stream->dev_input];
+            stream->dev_input = nil;
+        }
         [stream->cap_session removeOutput:stream->video_output];
 	[stream->cap_session release];
 	stream->cap_session = nil;
-    }    
-    if (stream->dev_input) {
-        stream->dev_input = nil;
     }
  
+    if (stream->video_output) {
+        [stream->video_output release];
+        stream->video_output = nil;
+    }
+
     if (stream->vout_delegate) {
 	[stream->vout_delegate release];
 	stream->vout_delegate = nil;
-    }
-    if (stream->video_output) {
-        stream->video_output = nil;
     }
 
     if (stream->prev_layer) {
@@ -1035,6 +1260,18 @@ static pj_status_t ios_stream_destroy(pjmedia_vid_dev_stream *strm)
         CGDataProviderRelease(stream->render_data_provider);
         stream->render_data_provider = nil;
     }
+
+    if (stream->queue) {
+        dispatch_release(stream->queue);
+        stream->queue = nil;
+    }
+    
+    if (stream->frame_lock) {
+        [stream->frame_lock release];
+        stream->frame_lock = nil;
+    }
+    
+    pjmedia_vid_dev_conv_destroy_converter(&stream->conv);
 
     pj_pool_release(stream->pool);
 

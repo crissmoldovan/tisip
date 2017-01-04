@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: openh264.cpp 5045 2015-04-06 06:13:51Z nanang $ */
 /* 
  * Copyright (C)2014 Teluu Inc. (http://www.teluu.com)
  *
@@ -39,8 +39,16 @@
  * Constants
  */
 #define THIS_FILE		"openh264.cpp"
-#define DEFAULT_WIDTH		720
-#define DEFAULT_HEIGHT		480
+
+#if (defined(PJ_DARWINOS) && PJ_DARWINOS != 0 && TARGET_OS_IPHONE) || \
+     defined(__ANDROID__)
+#  define DEFAULT_WIDTH		352
+#  define DEFAULT_HEIGHT	288
+#else
+#  define DEFAULT_WIDTH		720
+#  define DEFAULT_HEIGHT	480
+#endif
+
 #define DEFAULT_FPS		15
 #define DEFAULT_AVG_BITRATE	256000
 #define DEFAULT_MAX_BITRATE	256000
@@ -186,11 +194,14 @@ PJ_DEF(pj_status_t) pjmedia_codec_openh264_vid_init(pjmedia_vid_codec_mgr *mgr,
     status = pjmedia_sdp_neg_register_fmt_match_cb(
 					&h264_name,
 					&pjmedia_vid_codec_h264_match_sdp);
-    pj_assert(status == PJ_SUCCESS);
+    if (status != PJ_SUCCESS)
+	goto on_error;
 
     /* Register codec factory to codec manager. */
     status = pjmedia_vid_codec_mgr_register_factory(mgr,
 						    &oh264_factory.base);
+    if (status != PJ_SUCCESS)
+	goto on_error;
 
     PJ_LOG(4,(THIS_FILE, "OpenH264 codec initialized"));
 
@@ -364,6 +375,8 @@ static pj_status_t oh264_dealloc_codec(pjmedia_vid_codec_factory *factory,
 
     PJ_ASSERT_RETURN(codec, PJ_EINVAL);
 
+    PJ_UNUSED_ARG(factory);
+
     oh264_data = (oh264_codec_data*) codec->codec_data;
     if (oh264_data->enc) {
 	WelsDestroySVCEncoder(oh264_data->enc);
@@ -462,9 +475,10 @@ static pj_status_t oh264_codec_open(pjmedia_vid_codec *codec,
     eprm.sSpatialLayers[0].uiProfileIdc	= PRO_BASELINE;
     eprm.iPicWidth			= param->enc_fmt.det.vid.size.w;
     eprm.iPicHeight			= param->enc_fmt.det.vid.size.h;
-    eprm.fMaxFrameRate			= (param->enc_fmt.det.vid.fps.num * 1.0 /
+    eprm.fMaxFrameRate			= (param->enc_fmt.det.vid.fps.num *
+					   1.0f /
 					   param->enc_fmt.det.vid.fps.denum);
-    eprm.uiFrameToBeCoded		= -1;
+    eprm.uiFrameToBeCoded		= (unsigned int) -1;
     eprm.iTemporalLayerNum		= 1;
     eprm.uiIntraPeriod			= 0; /* I-Frame interval in frames */
     eprm.bEnableSpsPpsIdAddition	= (oh264_data->whole? false : true);

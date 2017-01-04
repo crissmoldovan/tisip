@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: pjmedia-codec.h 5239 2016-02-04 06:11:58Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -38,6 +38,7 @@
 #include <pjmedia-codec/openh264.h>
 #include <pjmedia-codec/passthrough.h>
 #include <pjmedia-codec/silk.h>
+#include <pjmedia-codec/opus.h>
 
 
 #endif	/* __PJMEDIA_CODEC_PJMEDIA_CODEC_H__ */

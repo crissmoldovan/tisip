@@ -1,4 +1,4 @@
-# $Id$
+# $Id: transfer-unattended.py 4724 2014-01-31 08:52:09Z nanang $
 #
 import inc_const as const
 

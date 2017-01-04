@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sip_resolve.c 5337 2016-06-08 02:49:56Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -70,6 +70,7 @@ struct query
 struct pjsip_resolver_t
 {
     pj_dns_resolver *res;
+    pjsip_ext_resolver *ext_res;
 };
 
 
@@ -114,6 +115,26 @@ PJ_DEF(pj_status_t) pjsip_resolver_set_resolver(pjsip_resolver_t *res,
 #endif
 }
 
+/*
+ * Public API to set the DNS external resolver implementation for the SIP 
+ * resolver.
+ */
+PJ_DEF(pj_status_t) pjsip_resolver_set_ext_resolver(pjsip_resolver_t *res,
+                                                    pjsip_ext_resolver *ext_res)
+{
+    if (ext_res && !ext_res->resolve)
+	return PJ_EINVAL;
+
+    if (ext_res && res->res) {
+#if PJSIP_HAS_RESOLVER
+	pj_dns_resolver_destroy(res->res, PJ_FALSE);
+#endif
+	res->res = NULL;
+    }
+    res->ext_res = ext_res;
+    return PJ_SUCCESS;
+}
+
 
 /*
  * Public API to get the internal DNS resolver.
@@ -147,8 +168,8 @@ static int get_ip_addr_ver(const pj_str_t *host)
     pj_in_addr dummy;
     pj_in6_addr dummy6;
 
-    /* First check with inet_aton() */
-    if (pj_inet_aton(host, &dummy) > 0)
+    /* First check if this is an IPv4 address */
+    if (pj_inet_pton(pj_AF_INET(), host, &dummy) == PJ_SUCCESS)
 	return 4;
 
     /* Then check if this is an IPv6 address */
@@ -174,9 +195,22 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
     int ip_addr_ver;
     struct query *query;
     pjsip_transport_type_e type = target->type;
+    int af = pj_AF_UNSPEC();
+
+    /* If an external implementation has been provided use it instead */
+    if (resolver->ext_res) {
+        (*resolver->ext_res->resolve)(resolver, pool, target, token, cb);
+        return;
+    }
 
     /* Is it IP address or hostname? And if it's an IP, which version? */
     ip_addr_ver = get_ip_addr_ver(&target->addr.host);
+
+    /* Initialize address family type */
+    if ((ip_addr_ver == 6) || (type & PJSIP_TRANSPORT_IPV6))
+	af = pj_AF_INET6();
+    else if (ip_addr_ver == 4)
+	af = pj_AF_INET();
 
     /* Set the transport type if not explicitly specified. 
      * RFC 3263 section 4.1 specify rules to set up this.
@@ -214,10 +248,6 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
 		type = PJSIP_TRANSPORT_UDP;
 	    }
 	}
-
-	/* Add IPv6 flag for IPv6 address */
-	if (ip_addr_ver == 6)
-	    type = (pjsip_transport_type_e)((int)type + PJSIP_TRANSPORT_IPV6);
     }
 
 
@@ -233,7 +263,7 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
 	    if (ip_addr_ver == 4) {
 		pj_sockaddr_init(pj_AF_INET(), &svr_addr.entry[0].addr, 
 				 NULL, 0);
-		pj_inet_aton(&target->addr.host,
+		pj_inet_pton(pj_AF_INET(), &target->addr.host,
 			     &svr_addr.entry[0].addr.ipv4.sin_addr);
 	    } else {
 		pj_sockaddr_init(pj_AF_INET6(), &svr_addr.entry[0].addr, 
@@ -244,7 +274,6 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
 	} else {
 	    pj_addrinfo ai;
 	    unsigned count;
-	    int af;
 
 	    PJ_LOG(5,(THIS_FILE,
 		      "DNS resolver not available, target '%.*s:%d' type=%s "
@@ -253,12 +282,6 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
 		      target->addr.host.ptr,
 		      target->addr.port,
 		      pjsip_transport_get_type_name(target->type)));
-
-	    if (type & PJSIP_TRANSPORT_IPV6) {
-		af = pj_AF_INET6();
-	    } else {
-		af = pj_AF_INET();
-	    }
 
 	    /* Resolve */
 	    count = 1;
@@ -272,10 +295,14 @@ PJ_DEF(void) pjsip_resolve( pjsip_resolver_t *resolver,
 		goto on_error;
 	    }
 
-	    svr_addr.entry[0].addr.addr.sa_family = (pj_uint16_t)af;
-	    pj_memcpy(&svr_addr.entry[0].addr, &ai.ai_addr,
-		      sizeof(pj_sockaddr));
+	    pj_sockaddr_cp(&svr_addr.entry[0].addr, &ai.ai_addr);
+	    if (af == pj_AF_UNSPEC())
+		af = ai.ai_addr.addr.sa_family;
 	}
+
+	/* After address resolution, update IPv6 bitflag in transport type. */
+	if (af == pj_AF_INET6())
+	    type |= PJSIP_TRANSPORT_IPV6;
 
 	/* Set the port number */
 	if (target->addr.port == 0) {
@@ -453,7 +480,9 @@ static void dns_a_callback(void *user_data,
 
     /* Build server addresses and call callback */
     srv.count = 0;
-    for (i=0; i<rec.addr_count; ++i) {
+    for (i = 0; i < rec.addr_count &&
+		srv.count < PJSIP_MAX_RESOLVED_ADDRESSES; ++i)
+    {
 	srv.entry[srv.count].type = query->naptr[0].type;
 	srv.entry[srv.count].priority = 0;
 	srv.entry[srv.count].weight = 0;
@@ -498,7 +527,9 @@ static void srv_resolver_cb(void *user_data,
     for (i=0; i<rec->count; ++i) {
 	unsigned j;
 
-	for (j=0; j<rec->entry[i].server.addr_count; ++j) {
+	for (j = 0; j < rec->entry[i].server.addr_count &&
+		    srv.count < PJSIP_MAX_RESOLVED_ADDRESSES; ++j)
+	{
 	    srv.entry[srv.count].type = query->naptr[0].type;
 	    srv.entry[srv.count].priority = rec->entry[i].priority;
 	    srv.entry[srv.count].weight = rec->entry[i].weight;

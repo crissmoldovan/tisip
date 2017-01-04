@@ -4,6 +4,7 @@
 # Valid values are:
 #   - mac_os
 #   - iphone_os
+#   - android_os
 AC_PJMEDIA_VIDEO = iphone_os
 
 # SDL flags
@@ -23,13 +24,31 @@ AC_PJMEDIA_VIDEO_HAS_QT =
 QT_CFLAGS = 
 
 # iOS
-IOS_CFLAGS = -DPJMEDIA_VIDEO_DEV_HAS_IOS=1
+IOS_CFLAGS = -DPJMEDIA_VIDEO_DEV_HAS_IOS=1 -DPJMEDIA_VIDEO_DEV_HAS_IOS_OPENGL=1
+
+# Android
+ANDROID_CFLAGS = 
+
+# libyuv
+LIBYUV_CFLAGS = 
+LIBYUV_LDFLAGS = 
+
+# openh264
+OPENH264_CFLAGS = 
+OPENH264_LDFLAGS = 
+
+# WebRtc
+WEBRTC_CFLAGS = 
+WEBRTC_LDFLAGS = 
+
 
 # PJMEDIA features exclusion
 export CFLAGS +=    \
 		 $(SDL_CFLAGS) $(FFMPEG_CFLAGS) $(V4L2_CFLAGS) $(QT_CFLAGS) \
-		 $(IOS_CFLAGS)
-export LDFLAGS += $(SDL_LDFLAGS) $(FFMPEG_LDFLAGS) $(V4L2_LDFLAGS)
+		 $(IOS_CFLAGS) $(ANDROID_CFLAGS) $(LIBYUV_CFLAGS) \
+		 $(OPENH264_CFLAGS) $(WEBRTC_CFLAGS)
+export LDFLAGS += $(SDL_LDFLAGS) $(FFMPEG_LDFLAGS) $(V4L2_LDFLAGS) \
+		  $(LIBYUV_LDFLAGS) $(OPENH264_LDFLAGS) $(WEBRTC_LDFLAGS)
 
 # Define the desired sound device backend
 # Valid values are:
@@ -37,7 +56,9 @@ export LDFLAGS += $(SDL_LDFLAGS) $(FFMPEG_LDFLAGS) $(V4L2_LDFLAGS)
 #   - pa_darwinos:  	PortAudio on MacOSX (CoreAudio)
 #   - pa_old_darwinos:  PortAudio on MacOSX (old CoreAudio, for OSX 10.2)
 #   - pa_win32:	    	PortAudio on Win32 (WMME)
-#   - ds:	    	Win32 DirectSound (dsound.c)
+#   - win32:	    	Win32 MME (wmme_dev.c)
+#   - coreaudio:	MaxOSX CoreAudio (coreaudio_dev.m)
+#   - alsa:		Unix ALSA (alsa_dev.c)
 #   - null:	    	Null sound device (nullsound.c)
 #   - external:		Link with no sounddev (app will provide)
 AC_PJMEDIA_SND=
@@ -170,21 +191,35 @@ endif
 #
 # PortAudio
 #
-ifneq ($(findstring pa,$(AC_PJMEDIA_SND)),)
 ifeq (0,1)
 # External PA
 export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=1
-else
-# Our PA in third_party
-export CFLAGS += -I$(THIRD_PARTY)/build/portaudio -I$(THIRD_PARTY)/portaudio/include -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=1
 endif
+
+#
+# MacOSX specific
+#
+ifneq ($(findstring coreaudio,$(AC_PJMEDIA_SND)),)
+export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_COREAUDIO=1 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
+endif
+
+#
+# Unix specific
+#
+ifneq ($(findstring alsa,$(AC_PJMEDIA_SND)),)
+export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_ALSA=1 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
 endif
 
 #
 # Windows specific
 #
 ifneq ($(findstring win32,$(AC_PJMEDIA_SND)),)
-export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_WMME=1
+export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_WMME=1 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0
 else
 export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
 endif
@@ -193,14 +228,16 @@ endif
 # Null sound device
 #
 ifeq ($(AC_PJMEDIA_SND),null)
-export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0 -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
+export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
 endif
 
 #
 # External sound device
 #
 ifeq ($(AC_PJMEDIA_SND),external)
-export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0 -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
+export CFLAGS += -DPJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0 \
+		 -DPJMEDIA_AUDIO_DEV_HAS_WMME=0
 endif
 
 #
@@ -218,7 +255,15 @@ export PJMEDIA_VIDEODEV_OBJS += ios_dev.o ios_opengl_dev.o
 endif
 
 #
-# Determine whether we should compile the obj-c version of a particular source code
+# Android video device
+#
+ifeq ($(AC_PJMEDIA_VIDEO),android_os)
+export PJMEDIA_VIDEODEV_OBJS += android_dev.o android_opengl.o
+endif
+
+#
+# Determine whether we should compile the obj-c version of a particular
+# source code
 #
 ifneq (,$(filter $(AC_PJMEDIA_VIDEO),mac_os iphone_os))
 # Mac and iPhone OS specific, use obj-c

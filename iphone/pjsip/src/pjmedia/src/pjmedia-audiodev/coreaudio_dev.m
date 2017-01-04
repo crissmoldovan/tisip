@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: coreaudio_dev.m 5171 2015-08-27 02:23:55Z ming $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -335,6 +335,32 @@ static pj_status_t ca_factory_init(pjmedia_aud_dev_factory *f)
     }
 #endif
 
+    /* Initialize audio session category and mode */
+    {
+	AVAudioSession *sess = [AVAudioSession sharedInstance];
+	pj_bool_t err;
+
+	if ([sess respondsToSelector:@selector(setCategory:withOptions:error:)])
+	{
+	    err = [sess setCategory:AVAudioSessionCategoryPlayAndRecord
+		        withOptions:AVAudioSessionCategoryOptionAllowBluetooth
+		        error:nil] != YES;
+        } else {
+    	    err = [sess setCategory:AVAudioSessionCategoryPlayAndRecord
+		        error:nil] != YES;
+        }
+	if (err) {
+            PJ_LOG(3, (THIS_FILE,
+   	               "Warning: failed settting audio session category"));
+	}
+
+	if ([sess respondsToSelector:@selector(setMode:error:)] &&
+	    [sess setMode:AVAudioSessionModeVoiceChat error:nil] != YES)
+	{
+	    PJ_LOG(3, (THIS_FILE, "Warning: failed settting audio mode"));
+	}
+    }
+
     cf_instance = cf;
 #endif
 
@@ -433,10 +459,9 @@ static pj_status_t ca_factory_refresh(pjmedia_aud_dev_factory *f)
 	       dev_count));
 
     /* Get all the audio device IDs */
-    dev_ids = (AudioDeviceID *)pj_pool_calloc(cf->pool, dev_size, size);
+    dev_ids = (AudioDeviceID *)pj_pool_calloc(cf->pool, dev_count, size);
     if (!dev_ids)
 	return PJ_ENOMEM;
-    pj_bzero(dev_ids, dev_count);
     ostatus = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr,
 					 0, NULL,
 				         &dev_size, (void *)dev_ids);
@@ -463,7 +488,7 @@ static pj_status_t ca_factory_refresh(pjmedia_aud_dev_factory *f)
 	if (ostatus == noErr && dev_id != dev_ids[idx]) {
 	    AudioDeviceID temp_id = dev_ids[idx];
 	    
-	    for (i = idx + 1; i < dev_size; i++) {
+	    for (i = idx + 1; i < dev_count; i++) {
 		if (dev_ids[i] == dev_id) {
 		    dev_ids[idx++] = dev_id;
 		    dev_ids[i] = temp_id;
@@ -480,7 +505,7 @@ static pj_status_t ca_factory_refresh(pjmedia_aud_dev_factory *f)
 	if (ostatus == noErr && dev_id != dev_ids[idx]) {
 	    AudioDeviceID temp_id = dev_ids[idx];
 	    
-	    for (i = idx + 1; i < dev_size; i++) {
+	    for (i = idx + 1; i < dev_count; i++) {
 		if (dev_ids[i] == dev_id) {
 		    dev_ids[idx] = dev_id;
 		    dev_ids[i] = temp_id;
@@ -1237,15 +1262,9 @@ static pj_status_t create_audio_unit(AudioComponent io_comp,
 				     AudioUnit *io_unit)
 {
     OSStatus ostatus;
+
 #if !COREAUDIO_MAC
-    /* We want to be able to open playback and recording streams */
     strm->sess = [AVAudioSession sharedInstance];
-    if ([strm->sess setCategory:AVAudioSessionCategoryPlayAndRecord
-                    error:nil] != YES)
-    {
-	PJ_LOG(4, (THIS_FILE,
-		   "Warning: cannot set the audio session category"));
-    }    
 #endif
     
     /* Create an audio unit to interface with the device */
@@ -2063,8 +2082,17 @@ static pj_status_t ca_stream_stop(pjmedia_aud_stream *strm)
 
 #if !COREAUDIO_MAC
     if (should_deactivate) {
-	if ([stream->sess setActive:false error:nil] != YES) {
-            PJ_LOG(4, (THIS_FILE, "Warning: cannot deactivate audio session"));
+        if ([stream->sess 
+             respondsToSelector:@selector(setActive:withOptions:error:)])
+        {
+  	    [stream->sess setActive:NO
+  	    withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation 
+  	    error:nil];
+	} else {
+	    if ([stream->sess setActive:NO error:nil] != YES) {
+            	PJ_LOG(4, (THIS_FILE, "Warning: cannot deactivate "
+            			      "audio session"));
+            }
         }
     }
 #endif

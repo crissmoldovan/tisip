@@ -11,10 +11,21 @@
 #import "PjSIPDispatch.h"
 #import "PjSIP.h"
 #import "Util.h"
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+
+#define IOS_CELLULAR    @"pdp_ip0"
+#define IOS_WIFI        @"en0"
+#define IOS_VPN         @"utun0"
+#define IP_ADDR_IPv4    @"ipv4"
+#define IP_ADDR_IPv6    @"ipv6"
 
 @interface PjSIPProxy : NSObject
 
-@property pjsua_transport_id transportId;
+@property pjsua_transport_id transportIdUDP;
+@property pjsua_transport_id transportIdTCP;
+@property pjsua_transport_id transportIdTCP6;
 @property NSMutableArray *accountIds;
 
 + (PjSIPProxy *)sharedProxy;

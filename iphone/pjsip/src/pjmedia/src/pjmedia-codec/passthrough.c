@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: passthrough.c 4987 2015-03-03 02:41:27Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -309,7 +309,7 @@ static pj_status_t parse_amr(codec_private_t *codec_data, void *pkt,
     return PJ_SUCCESS;
 }
 
-#endif /* PJMEDIA_HAS_PASSTROUGH_CODEC_AMR */
+#endif /* PJMEDIA_HAS_PASSTHROUGH_CODEC_AMR */
 
 
 /*
@@ -350,7 +350,7 @@ PJ_DEF(pj_status_t) pjmedia_codec_passthrough_init( pjmedia_endpt *endpt )
     }
 
     /* Register format match callback. */
-#if PJMEDIA_HAS_PASSTROUGH_CODEC_AMR
+#if PJMEDIA_HAS_PASSTHROUGH_CODEC_AMR
     pj_cstr(&codec_name, "AMR");
     status = pjmedia_sdp_neg_register_fmt_match_cb(
 					&codec_name,
@@ -447,6 +447,7 @@ PJ_DEF(pj_status_t) pjmedia_codec_passthrough_deinit(void)
     if (!codec_mgr) {
 	pj_pool_release(codec_factory.pool);
 	codec_factory.pool = NULL;
+	pj_mutex_unlock(codec_factory.mutex);
 	return PJ_EINVALIDOP;
     }
 
@@ -455,7 +456,9 @@ PJ_DEF(pj_status_t) pjmedia_codec_passthrough_deinit(void)
 						  &codec_factory.base);
     
     /* Destroy mutex. */
+    pj_mutex_unlock(codec_factory.mutex);
     pj_mutex_destroy(codec_factory.mutex);
+    codec_factory.mutex = NULL;
 
     /* Destroy pool. */
     pj_pool_release(codec_factory.pool);

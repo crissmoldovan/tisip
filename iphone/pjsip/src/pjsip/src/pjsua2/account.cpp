@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: account.cpp 4957 2014-11-04 08:00:15Z nanang $ */
 /*
  * Copyright (C) 2013 Teluu Inc. (http://www.teluu.com)
  *
@@ -38,9 +38,10 @@ void AccountRegConfig::readObject(const ContainerNode &node) throw(Error)
     NODE_READ_UNSIGNED	(this_node, timeoutSec);
     NODE_READ_UNSIGNED	(this_node, retryIntervalSec);
     NODE_READ_UNSIGNED	(this_node, firstRetryIntervalSec);
+    NODE_READ_UNSIGNED	(this_node, randomRetryIntervalSec);
     NODE_READ_UNSIGNED	(this_node, delayBeforeRefreshSec);
     NODE_READ_BOOL	(this_node, dropCallsOnFail);
-    NODE_READ_UNSIGNED	(this_node, unregWaitSec);
+    NODE_READ_UNSIGNED	(this_node, unregWaitMsec);
     NODE_READ_UNSIGNED	(this_node, proxyUse);
 
     readSipHeaders(this_node, "headers", headers);
@@ -55,9 +56,10 @@ void AccountRegConfig::writeObject(ContainerNode &node) const throw(Error)
     NODE_WRITE_UNSIGNED	(this_node, timeoutSec);
     NODE_WRITE_UNSIGNED	(this_node, retryIntervalSec);
     NODE_WRITE_UNSIGNED	(this_node, firstRetryIntervalSec);
+    NODE_WRITE_UNSIGNED	(this_node, randomRetryIntervalSec);
     NODE_WRITE_UNSIGNED	(this_node, delayBeforeRefreshSec);
     NODE_WRITE_BOOL	(this_node, dropCallsOnFail);
-    NODE_WRITE_UNSIGNED	(this_node, unregWaitSec);
+    NODE_WRITE_UNSIGNED	(this_node, unregWaitMsec);
     NODE_WRITE_UNSIGNED	(this_node, proxyUse);
 
     writeSipHeaders(this_node, "headers", headers);
@@ -202,6 +204,7 @@ void AccountNatConfig::readObject(const ContainerNode &node) throw(Error)
     NODE_READ_STRING  ( this_node, sipOutboundRegId);
     NODE_READ_UNSIGNED( this_node, udpKaIntervalSec);
     NODE_READ_STRING  ( this_node, udpKaData);
+    NODE_READ_INT     ( this_node, contactUseSrcPort);
 }
 
 void AccountNatConfig::writeObject(ContainerNode &node) const throw(Error)
@@ -232,6 +235,7 @@ void AccountNatConfig::writeObject(ContainerNode &node) const throw(Error)
     NODE_WRITE_STRING  ( this_node, sipOutboundRegId);
     NODE_WRITE_UNSIGNED( this_node, udpKaIntervalSec);
     NODE_WRITE_STRING  ( this_node, udpKaData);
+    NODE_WRITE_INT     ( this_node, contactUseSrcPort);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -316,9 +320,10 @@ void AccountConfig::toPj(pjsua_acc_config &ret) const
     ret.reg_timeout		= regConfig.timeoutSec;
     ret.reg_retry_interval	= regConfig.retryIntervalSec;
     ret.reg_first_retry_interval= regConfig.firstRetryIntervalSec;
+    ret.reg_retry_random_interval= regConfig.randomRetryIntervalSec;
     ret.reg_delay_before_refresh= regConfig.delayBeforeRefreshSec;
     ret.drop_calls_on_reg_fail	= regConfig.dropCallsOnFail;
-    ret.unreg_timeout		= regConfig.unregWaitSec;
+    ret.unreg_timeout		= regConfig.unregWaitMsec;
     ret.reg_use_proxy		= regConfig.proxyUse;
     for (i=0; i<regConfig.headers.size(); ++i) {
 	pj_list_push_back(&ret.reg_hdr_list, &regConfig.headers[i].toPj());
@@ -397,6 +402,7 @@ void AccountConfig::toPj(pjsua_acc_config &ret) const
 
     ret.allow_contact_rewrite	= natConfig.contactRewriteUse;
     ret.contact_rewrite_method	= natConfig.contactRewriteMethod;
+    ret.contact_use_src_port	= natConfig.contactUseSrcPort;
     ret.allow_via_rewrite	= natConfig.viaRewriteUse;
     ret.allow_sdp_nat_rewrite	= natConfig.sdpNatRewriteUse;
     ret.use_rfc5626		= natConfig.sipOutboundUse;
@@ -442,9 +448,10 @@ void AccountConfig::fromPj(const pjsua_acc_config &prm,
     regConfig.timeoutSec	= prm.reg_timeout;
     regConfig.retryIntervalSec	= prm.reg_retry_interval;
     regConfig.firstRetryIntervalSec = prm.reg_first_retry_interval;
+    regConfig.randomRetryIntervalSec = prm.reg_retry_random_interval;
     regConfig.delayBeforeRefreshSec = prm.reg_delay_before_refresh;
     regConfig.dropCallsOnFail	= PJ2BOOL(prm.drop_calls_on_reg_fail);
-    regConfig.unregWaitSec	= prm.unreg_timeout;
+    regConfig.unregWaitMsec	= prm.unreg_timeout;
     regConfig.proxyUse		= prm.reg_use_proxy;
     regConfig.headers.clear();
     hdr = prm.reg_hdr_list.next;
@@ -558,6 +565,7 @@ void AccountConfig::fromPj(const pjsua_acc_config &prm,
     }
     natConfig.contactRewriteUse	= prm.allow_contact_rewrite;
     natConfig.contactRewriteMethod = prm.contact_rewrite_method;
+    natConfig.contactUseSrcPort	= prm.contact_use_src_port;
     natConfig.viaRewriteUse	= prm.allow_via_rewrite;
     natConfig.sdpNatRewriteUse	= prm.allow_sdp_nat_rewrite;
     natConfig.sipOutboundUse	= prm.use_rfc5626;

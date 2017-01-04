@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sock_common.c 5092 2015-05-12 01:56:29Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -180,7 +180,7 @@ PJ_DEF(pj_status_t) pj_sockaddr_set_str_addr(int af,
 	    status = pj_getaddrinfo(PJ_AF_INET6, str_addr, &count, &ai);
 	    if (status==PJ_SUCCESS) {
 		pj_memcpy(&addr->ipv6.sin6_addr, &ai.ai_addr.ipv6.sin6_addr,
-			  sizeof(pj_sockaddr_in6));
+			  sizeof(addr->ipv6.sin6_addr));
 	    }
 	}
     } else {
@@ -802,7 +802,6 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
     }
 #else
     PJ_UNUSED_ARG(ai);
-    PJ_UNUSED_ARG(count);
 #endif
 
     /* Get default interface (interface for default route) */
@@ -830,7 +829,7 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
     /* Enumerate IP interfaces */
     if (cand_cnt < PJ_ARRAY_SIZE(cand_addr)) {
 	unsigned start_if = cand_cnt;
-	unsigned count = PJ_ARRAY_SIZE(cand_addr) - start_if;
+	count = PJ_ARRAY_SIZE(cand_addr) - start_if;
 
 	status = pj_enum_ip_interface(af, &count, &cand_addr[start_if]);
 	if (status == PJ_SUCCESS && count) {

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: activesock.c 5119 2015-06-25 08:53:02Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -157,7 +157,9 @@ static void activesock_create_iphone_os_stream(pj_activesock_t *asock)
 	    CFReadStreamOpen(asock->readStream) != TRUE)
 	{
 	    PJ_LOG(2,("", "Failed to configure TCP transport for VoIP "
-		      "usage. Background mode will not be supported."));
+		      "usage. Usage of THIS particular TCP transport in "
+		      "background mode will not be supported."));
+
 	    
 	    activesock_destroy_iphone_os_stream(asock);
 	}
@@ -297,12 +299,13 @@ PJ_DEF(pj_status_t) pj_activesock_close(pj_activesock_t *asock)
     PJ_ASSERT_RETURN(asock, PJ_EINVAL);
     asock->shutdown = SHUT_RX | SHUT_TX;
     if (asock->key) {
+	pj_ioqueue_unregister(asock->key);
+
 #if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
     PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0
 	activesock_destroy_iphone_os_stream(asock);
 #endif	
-	
-	pj_ioqueue_unregister(asock->key);
+
 	asock->key = NULL;
     }
     return PJ_SUCCESS;

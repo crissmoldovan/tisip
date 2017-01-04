@@ -38,11 +38,21 @@ using namespace pj;
   // Force the Error Java class to extend java.lang.Exception
   %typemap(javabase) pj::Error "java.lang.Exception";
 
-  // Override getMessage()
   %typemap(javacode) pj::Error %{
+
+  // Override getMessage()
   public String getMessage() {
     return getTitle();
   }
+  
+  // Disable serialization (check ticket #1868)
+  private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    throw new java.io.NotSerializableException("Check ticket #1868!");
+  }
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException {
+    throw new java.io.NotSerializableException("Check ticket #1868!");
+  }
+
 %}
 #endif
 
@@ -60,6 +70,7 @@ using namespace pj;
 %feature("director") Call;
 %feature("director") Buddy;
 %feature("director") FindBuddyMatch;
+%feature("director") AudioMediaPlayer;
 
 //
 // STL stuff.
@@ -100,9 +111,29 @@ using namespace pj;
 %template(MediaFormatVector)		std::vector<pj::MediaFormat*>;
 %template(AudioDevInfoVector)		std::vector<pj::AudioDevInfo*>;
 %template(CodecInfoVector)		std::vector<pj::CodecInfo*>;
+%template(VideoDevInfoVector)		std::vector<pj::VideoDevInfo*>;
+%template(CodecFmtpVector)		std::vector<pj::CodecFmtp>;	
+
+/* pj::WindowHandle::setWindow() receives Surface object */
+#if defined(SWIGJAVA) && defined(__ANDROID__)
+%{
+#if defined(PJMEDIA_HAS_VIDEO) && PJMEDIA_HAS_VIDEO!=0
+#  include <android/native_window_jni.h>
+#else
+#  define ANativeWindow_fromSurface(a,b) NULL
+#endif
+%}
+%ignore pj::WindowHandle::display;
+%ignore pj::WindowHandle::window;
+%typemap(in) jobject surface {
+    $1 = ($input? (jobject)ANativeWindow_fromSurface(jenv, $input): NULL);
+}
+%extend pj::WindowHandle {
+    void setWindow(jobject surface) { $self->window = surface; }
+}
+#endif
 
 %include "pjsua2/media.hpp"
-%include "pjsua2/endpoint.hpp"
 %include "pjsua2/presence.hpp"
 %include "pjsua2/account.hpp"
 %include "pjsua2/call.hpp"
@@ -112,3 +143,24 @@ using namespace pj;
 %ignore pj::JsonDocument::allocElement;
 %ignore pj::JsonDocument::getPool;
 %include "pjsua2/json.hpp"
+
+// Try force Java GC before destroying the lib:
+// - to avoid late destroy of PJ objects by GC
+// - to avoid destruction of PJ objects from a non-registered GC thread
+#ifdef SWIGJAVA
+%rename(libDestroy_) pj::Endpoint::libDestroy;
+%typemap(javacode) pj::Endpoint %{
+  public void libDestroy(long prmFlags) throws java.lang.Exception {
+	Runtime.getRuntime().gc();
+	libDestroy_(prmFlags);
+  }
+
+  public void libDestroy() throws java.lang.Exception {
+	Runtime.getRuntime().gc();
+	libDestroy_();
+  }
+%}
+#endif
+
+%include "pjsua2/endpoint.hpp"
+

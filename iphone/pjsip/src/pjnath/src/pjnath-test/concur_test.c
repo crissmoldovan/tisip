@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: concur_test.c 5339 2016-06-08 03:17:45Z nanang $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -26,7 +26,7 @@
 /****************************************************************************/
 #define WORKER_THREAD_CNT	4
 #define SERVER_THREAD_CNT	4
-#define MAX_SOCK_CLIENTS	80
+#define MAX_SOCK_CLIENTS	(PJ_IOQUEUE_MAX_HANDLES/2)
 
 struct stun_test_session
 {
@@ -219,6 +219,9 @@ static int stun_destroy_test_session(struct stun_test_session *test_sess)
 	}
     }
 
+    /* Give some time to ioqueue to free sockets */
+    pj_thread_sleep(PJ_IOQUEUE_KEY_FREE_DELAY);
+
     return 0;
 }
 
@@ -252,7 +255,7 @@ static int stun_destroy_test(void)
     pj_timer_heap_set_lock(test_sess.stun_cfg.timer_heap, test_sess.lock, PJ_TRUE);
     pj_assert(status == PJ_SUCCESS);
 
-    status = pj_ioqueue_create(pool, 512, &test_sess.stun_cfg.ioqueue);
+    status = pj_ioqueue_create(pool, PJ_IOQUEUE_MAX_HANDLES, &test_sess.stun_cfg.ioqueue);
     pj_assert(status == PJ_SUCCESS);
 
     pj_sock_socket(pj_AF_INET(), pj_SOCK_DGRAM(), 0, &test_sess.server_sock);

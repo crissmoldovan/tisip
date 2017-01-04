@@ -62,6 +62,10 @@ dependencies: /Users/criss/work/tisip/iphone/Classes/PJUtil.m \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/sdp.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/transport.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/errno.h \
+  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-audiodev/audiodev.h \
+  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/audiodev.h \
+  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-audiodev/config.h \
+  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-audiodev/errno.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/g711.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-codec/types.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-codec/config.h \
@@ -79,9 +83,6 @@ dependencies: /Users/criss/work/tisip/iphone/Classes/PJUtil.m \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/sdp_neg.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/silencedet.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/sound.h \
-  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-audiodev/audiodev.h \
-  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-audiodev/config.h \
-  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-audiodev/errno.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/sound_port.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/splitcomb.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/stereo.h \
@@ -109,6 +110,7 @@ dependencies: /Users/criss/work/tisip/iphone/Classes/PJUtil.m \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/transport_udp.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/vid_port.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-videodev/videodev.h \
+  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/videodev.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-videodev/config.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-videodev/errno.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia/vid_stream.h \
@@ -131,6 +133,7 @@ dependencies: /Users/criss/work/tisip/iphone/Classes/PJUtil.m \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-codec/opencore_amr.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-codec/openh264.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-codec/silk.h \
+  /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-codec/opus.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia_videodev.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-videodev/videodev_imp.h \
   /Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include/pjmedia-videodev/avi_dev.h \

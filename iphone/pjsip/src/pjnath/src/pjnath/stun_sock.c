@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: stun_sock.c 5296 2016-05-13 07:46:17Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -435,8 +435,10 @@ PJ_DEF(pj_status_t) pj_stun_sock_start( pj_stun_sock *stun_sock,
 	    unsigned cnt = 1;
 
 	    status = pj_getaddrinfo(stun_sock->af, domain, &cnt, &ai);
-	    if (status != PJ_SUCCESS)
+	    if (status != PJ_SUCCESS) {
+	        pj_grp_lock_release(stun_sock->grp_lock);
 		return status;
+	    }
 
 	    pj_sockaddr_cp(&stun_sock->srv_addr, &ai.ai_addr);
 	}

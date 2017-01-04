@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: os_time_common.c 4784 2014-03-10 08:58:49Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>

@@ -17,7 +17,7 @@ export exec_prefix := @exec_prefix@
 export includedir := @includedir@
 export libdir := @libdir@
 
-LIB_SUFFIX = $(TARGET_NAME).a
+LIB_SUFFIX := $(TARGET_NAME).a
 
 ifeq (@ac_shared_libraries@,1)
 export PJ_SHARED_LIBRARIES := 1
@@ -152,12 +152,18 @@ QT_CFLAGS = @ac_qt_cflags@
 # iOS
 IOS_CFLAGS = @ac_ios_cflags@
 
+# Android
+ANDROID_CFLAGS = @ac_android_cflags@
+
+# libyuv
+LIBYUV_CFLAGS = @ac_libyuv_cflags@ 
+LIBYUV_LDFLAGS =  @ac_libyuv_ldflags@
+
 # PJMEDIA features exclusion
 PJ_VIDEO_CFLAGS += $(SDL_CFLAGS) $(FFMPEG_CFLAGS) $(V4L2_CFLAGS) $(QT_CFLAGS) \
-		   $(OPENH264_CFLAGS) $(IOS_CFLAGS)
+		   $(OPENH264_CFLAGS) $(IOS_CFLAGS) $(LIBYUV_CFLAGS)
 PJ_VIDEO_LDFLAGS += $(SDL_LDFLAGS) $(FFMPEG_LDFLAGS) $(V4L2_LDFLAGS) \
-                   $(OPENH264_LDFLAGS)
-
+                   $(OPENH264_LDFLAGS) $(LIBYUV_LDFLAGS)
 
 # CFLAGS, LDFLAGS, and LIBS to be used by applications
 export APP_CC := @CC@
@@ -181,7 +187,7 @@ export APP_LDFLAGS := -L$(PJDIR)/pjlib/lib\
 	@LDFLAGS@
 export APP_LDXXFLAGS := $(APP_LDFLAGS)
 
-export APP_LIB_FILES = \
+export APP_LIB_FILES := \
 	$(PJ_DIR)/pjsip/lib/libpjsua-$(LIB_SUFFIX) \
 	$(PJ_DIR)/pjsip/lib/libpjsip-ua-$(LIB_SUFFIX) \
 	$(PJ_DIR)/pjsip/lib/libpjsip-simple-$(LIB_SUFFIX) \
@@ -194,7 +200,7 @@ export APP_LIB_FILES = \
 	$(PJ_DIR)/pjlib-util/lib/libpjlib-util-$(LIB_SUFFIX) \
 	$(APP_THIRD_PARTY_LIB_FILES) \
 	$(PJ_DIR)/pjlib/lib/libpj-$(LIB_SUFFIX)
-export APP_LIBXX_FILES = \
+export APP_LIBXX_FILES := \
 	$(PJ_DIR)/pjsip/lib/libpjsua2-$(LIB_SUFFIX) \
 	$(APP_LIB_FILES)
 

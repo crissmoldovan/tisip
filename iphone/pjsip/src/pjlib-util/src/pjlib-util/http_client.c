@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: http_client.c 4713 2014-01-23 08:13:11Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *

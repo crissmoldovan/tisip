@@ -1,5 +1,5 @@
 /* pjlib/include/pj/compat/m_auto.h.  Generated from m_auto.h.in by configure.  */
-/* $Id$ */
+/* $Id: m_auto.h.in 3295 2010-08-25 12:51:29Z bennylp $ */
 /* 
  * Copyright (C) 2008-2009 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -27,7 +27,7 @@
  */
 
 /* Machine name, filled in by autoconf script */
-#define PJ_M_NAME "arm"
+#define PJ_M_NAME "x86_64"
 
 /* Endianness. It's reported on pjsip list on 09/02/13 that autoconf
  * endianness detection failed for universal build, so special case

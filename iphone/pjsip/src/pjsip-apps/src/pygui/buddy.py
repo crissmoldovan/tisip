@@ -1,4 +1,4 @@
-# $Id$
+# $Id: buddy.py 4704 2014-01-16 05:30:46Z ming $
 #
 # pjsua Python GUI Demo
 #

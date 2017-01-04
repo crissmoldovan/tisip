@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: addr_resolv_sock.c 5319 2016-05-25 08:38:49Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -82,6 +82,8 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
     PJ_ASSERT_RETURN(af==PJ_AF_INET || af==PJ_AF_INET6 ||
 		     af==PJ_AF_UNSPEC, PJ_EINVAL);
 
+#if PJ_WIN32_WINCE
+
     /* Check if nodename is IP address */
     pj_bzero(&ai[0], sizeof(ai[0]));
     if ((af==PJ_AF_INET || af==PJ_AF_UNSPEC) &&
@@ -109,6 +111,10 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
 	return PJ_SUCCESS;
     }
 
+#else /* PJ_WIN32_WINCE */
+    PJ_UNUSED_ARG(has_addr);
+#endif
+
     /* Copy node name to null terminated string. */
     if (nodename->slen >= PJ_MAX_HOSTNAME)
 	return PJ_ENAMETOOLONG;
@@ -129,6 +135,7 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
 	    naddr = CFArrayGetCount(addrRef);
 	    for (idx = 0; idx < naddr && i < *count; idx++) {
 		struct sockaddr *addr;
+		size_t addr_size;
 		
 		addr = (struct sockaddr *)
 		       CFDataGetBytePtr(CFArrayGetValueAtIndex(addrRef, idx));
@@ -143,9 +150,12 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
 		pj_ansi_strcpy(ai[i].ai_canonname, nodecopy);
 		
 		/* Store address */
-		PJ_ASSERT_ON_FAIL(sizeof(*addr) <= sizeof(pj_sockaddr),
-				  continue);
-		pj_memcpy(&ai[i].ai_addr, addr, sizeof(*addr));
+		addr_size = sizeof(*addr);
+		if (addr->sa_family == PJ_AF_INET6) {
+		    addr_size = addr->sa_len;
+		}
+		PJ_ASSERT_ON_FAIL(addr_size <= sizeof(pj_sockaddr), 				  continue);
+		pj_memcpy(&ai[i].ai_addr, addr, addr_size);
 		PJ_SOCKADDR_RESET_LEN(&ai[i].ai_addr);
 		
 		i++;
@@ -209,6 +219,8 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
 
     PJ_ASSERT_RETURN(count && *count, PJ_EINVAL);
 
+#if PJ_WIN32_WINCE
+
     /* Check if nodename is IP address */
     pj_bzero(&ai[0], sizeof(ai[0]));
     if ((af==PJ_AF_INET || af==PJ_AF_UNSPEC) &&
@@ -236,6 +248,10 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
 
 	return PJ_SUCCESS;
     }
+
+#else /* PJ_WIN32_WINCE */
+    PJ_UNUSED_ARG(has_addr);
+#endif
 
     if (af == PJ_AF_INET || af == PJ_AF_UNSPEC) {
 	pj_hostent he;

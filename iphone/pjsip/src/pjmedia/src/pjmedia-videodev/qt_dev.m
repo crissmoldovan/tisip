@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: qt_dev.m 4722 2014-01-29 10:40:40Z nanang $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *

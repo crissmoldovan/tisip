@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: stun_transaction.c 5133 2015-07-14 01:18:19Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -138,6 +138,17 @@ PJ_DEF(pj_status_t) pj_stun_client_tsx_schedule_destroy(
 }
 
 
+PJ_DEF(pj_status_t) pj_stun_client_tsx_destroy(pj_stun_client_tsx *tsx)
+{
+    /*
+     * Currently tsx has no objects to destroy so we don't need to do anything
+     * here.
+     */
+    /* pj_stun_client_tsx_stop(tsx); */
+    PJ_UNUSED_ARG(tsx);
+    return PJ_SUCCESS;
+}
+
 /*
  * Destroy transaction immediately.
  */
@@ -251,7 +262,7 @@ static pj_status_t tsx_transmit_msg(pj_stun_client_tsx *tsx,
     if (status == PJNATH_ESTUNDESTROYED) {
 	/* We've been destroyed, don't access the object. */
     } else if (status != PJ_SUCCESS) {
-	if (mod_count) {
+	if (mod_count || status == PJ_EINVALIDOP) {
 		pj_timer_heap_cancel_if_active( tsx->timer_heap,
 	                               		&tsx->retransmit_timer,
 	                               		TIMER_INACTIVE);

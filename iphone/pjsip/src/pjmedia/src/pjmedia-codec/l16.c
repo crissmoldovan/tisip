@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: l16.c 5153 2015-08-07 09:22:32Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -229,6 +229,7 @@ PJ_DEF(pj_status_t) pjmedia_codec_l16_deinit(void)
     l16_factory.endpt = NULL;
 
     /* Destroy mutex. */
+    pj_mutex_unlock(l16_factory.mutex);
     pj_mutex_destroy(l16_factory.mutex);
     l16_factory.mutex = NULL;
 
@@ -590,7 +591,7 @@ static pj_status_t  l16_parse( pjmedia_codec *codec,
 	frames[count].type = PJMEDIA_FRAME_TYPE_AUDIO;
 	frames[count].buf = pkt;
 	frames[count].size = data->frame_size;
-	frames[count].timestamp.u64 = ts->u64 + (count * data->frame_size);
+	frames[count].timestamp.u64 = ts->u64 + (count * data->frame_size >> 1);
 
 	pkt = ((char*)pkt) + data->frame_size;
 	pkt_size -= data->frame_size;

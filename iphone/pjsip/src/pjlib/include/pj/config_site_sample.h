@@ -321,7 +321,7 @@
 
     /* Disable some codecs */
     #define PJMEDIA_HAS_L16_CODEC		0
-    #define PJMEDIA_HAS_G722_CODEC		0
+    //#define PJMEDIA_HAS_G722_CODEC		0
 
     /* Use the built-in CoreAudio's iLBC codec (yay!) */
     #define PJMEDIA_HAS_ILBC_CODEC		1
@@ -382,15 +382,18 @@
     /* We have our own OpenSL ES backend */
     #define PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO	0
     #define PJMEDIA_AUDIO_DEV_HAS_WMME		0
-    #define PJMEDIA_AUDIO_DEV_HAS_OPENSL        1
-    #define PJMEDIA_AUDIO_DEV_HAS_ANDROID_JNI	0
+    #define PJMEDIA_AUDIO_DEV_HAS_OPENSL        0
+    #define PJMEDIA_AUDIO_DEV_HAS_ANDROID_JNI	1
 
     /* Disable some codecs */
     #define PJMEDIA_HAS_L16_CODEC		0
-    #define PJMEDIA_HAS_G722_CODEC		0
+    //#define PJMEDIA_HAS_G722_CODEC		0
 
     /* Fine tune Speex's default settings for best performance/quality */
     #define PJMEDIA_CODEC_SPEEX_DEFAULT_QUALITY	5
+    
+    /* Increase number of video device's supported formats */
+    #define PJMEDIA_VID_DEV_INFO_FMT_CNT	128
 
     /*
      * PJSIP settings.
@@ -433,6 +436,8 @@
     #define PJMEDIA_HAS_SPEEX_AEC			0
     #undef PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO
     #define PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO		0
+    #undef PJMEDIA_AUDIO_DEV_HAS_ALSA
+    #define PJMEDIA_AUDIO_DEV_HAS_ALSA			0    
 #endif
 
 

@@ -165,17 +165,17 @@ PjSIPProxy *pjproxy;
             //[self startRingback];
             callStatus = @"CONNECTING";
             
-            BOOL success;
-            AVAudioSession *session = [AVAudioSession sharedInstance];
-            NSError *error = nil;
+//            BOOL success;
+//            AVAudioSession *session = [AVAudioSession sharedInstance];
+//            NSError *error = nil;
+//            
+//            success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
+//                               withOptions:AVAudioSessionCategoryOptionMixWithOthers
+//                                     error:&error];
+//            if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
             
-            success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
-                               withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                                     error:&error];
-            if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
-            
-            success = [session setActive:YES error:&error];
-            if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
+//            success = [session setActive:YES error:&error];
+//            if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
         } break;
             
         case PJSIP_INV_STATE_CONFIRMED: {
@@ -187,15 +187,16 @@ PjSIPProxy *pjproxy;
             //[self stopRingback];
             callStatus = @"DISCONNECTED";
             BOOL success;
-            AVAudioSession *session = [AVAudioSession sharedInstance];
-            NSError *error = nil;
+//            AVAudioSession *session = [AVAudioSession sharedInstance];
+//            NSError *error = nil;
+//            
+//            success = [session setCategory:AVAudioSessionCategorySoloAmbient
+//                                withOptions:AVAudioSessionCategoryOptionMixWithOthers
+//                                error:&error];
+//            if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
             
-            success = [session setCategory:AVAudioSessionCategorySoloAmbient
-                                     error:&error];
-            if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
-                        
-            success = [session setActive:NO error:&error];
-            if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
+//            success = [session setActive:NO error:&error];
+//            if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
         } break;
     }
     
@@ -424,10 +425,10 @@ PjSIPProxy *pjproxy;
     pushRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
 }
 
--(id)reset:(id)args{
+-(id)refresh:(id)args{
+    ENSURE_SINGLE_ARG(args, NSNumber);
     
-    [pjproxy stop];
-    [pjproxy start];
+    return [pjproxy refresh:args];
 }
 
 
@@ -442,6 +443,8 @@ PjSIPProxy *pjproxy;
     
     NSNumber* accountId = [NSNumber numberWithInt:[TiUtils intValue:@"accountId" properties:args]];
     NSString* uri = [TiUtils stringValue:@"uri" properties:args];
+    
+    NSLog(@"placing call: %@ from acc: %@", uri, accountId);
     
     [pjproxy placeCall:accountId toUri:uri];
 }
@@ -524,5 +527,35 @@ PjSIPProxy *pjproxy;
     
     [pjproxy sendDTMF:callId dtmf:digit];
 }
+
+-(void)resetAudio:(id)args{
+    NSError *error;
+    
+//    [[AVAudioSession sharedInstance] setActive:NO error:&error];
+//    NSLog(@"resetAudio error: %@", error);
+//    
+//    [[AVAudioSession sharedInstance] setActive:YES error:&error];
+//    NSLog(@"resetAudio error: %@", error);
+
+}
+
+-(void)stopAudio:(id)args{
+    NSError *error;
+    
+//    [[AVAudioSession sharedInstance] setActive:NO error:&error];
+//    NSLog(@"resetAudio error: %@", error);
+    
+}
+
+-(void)startAudio:(id)args{
+    NSError *error;
+    
+//    [[AVAudioSession sharedInstance] setActive:YES error:&error];
+//    NSLog(@"resetAudio error: %@", error);
+    
+}
+
+
+
 
 @end

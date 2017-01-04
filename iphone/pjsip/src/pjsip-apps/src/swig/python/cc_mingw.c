@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: cc_mingw.c 4745 2014-02-14 09:39:08Z nanang $ */
 /*
  * Copyright (C) 2014 Teluu Inc. (http://www.teluu.com)
  *

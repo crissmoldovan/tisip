@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: log.c 4761 2014-02-24 09:02:44Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>

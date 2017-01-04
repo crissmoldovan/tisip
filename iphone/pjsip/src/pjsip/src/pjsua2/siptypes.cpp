@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: siptypes.cpp 5207 2015-12-08 11:25:45Z ming $ */
 /*
  * Copyright (C) 2013 Teluu Inc. (http://www.teluu.com)
  *
@@ -157,6 +157,7 @@ TlsConfig::TlsConfig()
 pjsip_tls_setting TlsConfig::toPj() const
 {
     pjsip_tls_setting ts;
+    pjsip_tls_setting_default(&ts);
 
     ts.ca_list_file	= str2Pj(this->CaListFile);
     ts.cert_file	= str2Pj(this->certFile);
@@ -164,6 +165,7 @@ pjsip_tls_setting TlsConfig::toPj() const
     ts.password		= str2Pj(this->password);
     ts.method		= this->method;
     ts.ciphers_num	= (unsigned)this->ciphers.size();
+    ts.proto		= this->proto;
     // The following will only work if sizeof(enum)==sizeof(int)
     pj_assert(sizeof(ts.ciphers[0]) == sizeof(int));
     ts.ciphers		= ts.ciphers_num? 
@@ -187,6 +189,7 @@ void TlsConfig::fromPj(const pjsip_tls_setting &prm)
     this->privKeyFile 	= pj2Str(prm.privkey_file);
     this->password 	= pj2Str(prm.password);
     this->method 	= (pjsip_ssl_method)prm.method;
+    this->proto 	= prm.proto;
     // The following will only work if sizeof(enum)==sizeof(int)
     pj_assert(sizeof(prm.ciphers[0]) == sizeof(int));
     this->ciphers 	= IntVector(prm.ciphers, prm.ciphers+prm.ciphers_num);
@@ -260,6 +263,7 @@ void TransportConfig::fromPj(const pjsua_transport_config &prm)
 pjsua_transport_config TransportConfig::toPj() const
 {
     pjsua_transport_config tc;
+    pjsua_transport_config_default(&tc);
 
     tc.port		= this->port;
     tc.port_range	= this->portRange;
@@ -300,24 +304,24 @@ void TransportConfig::writeObject(ContainerNode &node) const throw(Error)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void TransportInfo::fromPj(const pjsua_transport_info &info)
+void TransportInfo::fromPj(const pjsua_transport_info &tinfo)
 {
-    this->id = info.id;
-    this->type = info.type;
-    this->typeName = pj2Str(info.type_name);
-    this->info = pj2Str(info.info);
-    this->flags = info.flag;
+    this->id = tinfo.id;
+    this->type = tinfo.type;
+    this->typeName = pj2Str(tinfo.type_name);
+    this->info = pj2Str(tinfo.info);
+    this->flags = tinfo.flag;
 
     char straddr[PJ_INET6_ADDRSTRLEN+10];
-    pj_sockaddr_print(&info.local_addr, straddr, sizeof(straddr), 3);
+    pj_sockaddr_print(&tinfo.local_addr, straddr, sizeof(straddr), 3);
     this->localAddress = straddr;
 
     pj_ansi_snprintf(straddr, sizeof(straddr), "%.*s:%d",
-                     (int)info.local_name.host.slen,
-                     info.local_name.host.ptr,
-                     info.local_name.port);
+                     (int)tinfo.local_name.host.slen,
+                     tinfo.local_name.host.ptr,
+                     tinfo.local_name.port);
     this->localName = straddr;
-    this->usageCount = info.usage_count;
+    this->usageCount = tinfo.usage_count;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -446,6 +450,7 @@ void SipEvent::fromPj(const pjsip_event &ev)
         body.tsxState.prevState = (pjsip_tsx_state_e)
         ev.body.tsx_state.prev_state;
         body.tsxState.tsx.fromPj(*ev.body.tsx_state.tsx);
+        body.tsxState.type = ev.body.tsx_state.type;
         if (body.tsxState.type == PJSIP_EVENT_TX_MSG) {
             if (ev.body.tsx_state.src.tdata)
         	body.tsxState.src.tdata.fromPj(*ev.body.tsx_state.src.tdata);
@@ -511,6 +516,7 @@ void SipTransaction::fromPj(pjsip_transaction &tsx)
     this->method        = pj2Str(tsx.method.name);
     this->statusCode    = tsx.status_code;
     this->statusText    = pj2Str(tsx.status_text);
+    this->state		= tsx.state;
     if (tsx.last_tx)
 	this->lastTx.fromPj(*tsx.last_tx);
     else

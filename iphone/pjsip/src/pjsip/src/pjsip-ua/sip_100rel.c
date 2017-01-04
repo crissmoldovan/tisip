@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sip_100rel.c 5250 2016-03-03 06:28:19Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -375,6 +375,19 @@ PJ_DEF(pj_status_t) pjsip_100rel_send_prack( pjsip_inv_session *inv,
 }
 
 
+/* Clear all responses in the transmission list */
+static void clear_all_responses(dlg_data *dd)
+{
+    tx_data_list_t *tl;
+
+    tl = dd->uas_state->tx_data_list.next;
+    while (tl != &dd->uas_state->tx_data_list) {
+	pjsip_tx_data_dec_ref(tl->tdata);
+	tl = tl->next;
+    }
+    pj_list_init(&dd->uas_state->tx_data_list);
+}
+
 /*
  * Notify 100rel module that the invite session has been disconnected.
  */
@@ -388,8 +401,16 @@ PJ_DEF(pj_status_t) pjsip_100rel_end_session(pjsip_inv_session *inv)
 
     /* Make sure we don't have pending transmission */
     if (dd->uas_state) {
-	pj_assert(!dd->uas_state->retransmit_timer.id);
-	pj_assert(pj_list_empty(&dd->uas_state->tx_data_list));
+       /* Cancel the retransmit timer */
+    	if (dd->uas_state->retransmit_timer.id) {
+	    pjsip_endpt_cancel_timer(dd->inv->dlg->endpt,
+				     &dd->uas_state->retransmit_timer);
+	    dd->uas_state->retransmit_timer.id = PJ_FALSE;
+	}
+	if (!pj_list_empty(&dd->uas_state->tx_data_list)) {
+	    /* Clear all pending responses (drop 'em) */
+	    clear_all_responses(dd);
+	}
     }
 
     return PJ_SUCCESS;
@@ -424,19 +445,6 @@ static void parse_rack(const pj_str_t *rack,
 	p_method->ptr = NULL;
 	p_method->slen = 0;
     }
-}
-
-/* Clear all responses in the transmission list */
-static void clear_all_responses(dlg_data *dd)
-{
-    tx_data_list_t *tl;
-
-    tl = dd->uas_state->tx_data_list.next;
-    while (tl != &dd->uas_state->tx_data_list) {
-	pjsip_tx_data_dec_ref(tl->tdata);
-	tl = tl->next;
-    }
-    pj_list_init(&dd->uas_state->tx_data_list);
 }
 
 
@@ -848,7 +856,7 @@ PJ_DEF(pj_status_t) pjsip_100rel_tx_response(pjsip_inv_session *inv,
 	    dd->uas_state = PJ_POOL_ZALLOC_T(inv->dlg->pool,
 					     uas_state_t);
 	    dd->uas_state->cseq = cseq_hdr->cseq;
-	    dd->uas_state->rseq = pj_rand() % 0x7FFF;
+	    dd->uas_state->rseq = (pj_rand() % 0x7FFF) + 1;
 	    pj_list_init(&dd->uas_state->tx_data_list);
 	    dd->uas_state->retransmit_timer.user_data = dd;
 	    dd->uas_state->retransmit_timer.cb = &on_retransmit;
