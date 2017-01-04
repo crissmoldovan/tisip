@@ -1,0 +1,35 @@
+-x
+objective-c
+-arch
+arm64
+-fobjc-arc
+-fmodules
+-fbuild-session-file=/var/folders/dm/681rk05d74dc7cjs_3cmzxqr0000gn/C/org.llvm.clang/ModuleCache/Session.modulevalidation
+-fpascal-strings
+-Os
+-DTI_VERSION=
+-DDEBUG=1
+-isysroot
+/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.1.sdk
+-miphoneos-version-min=6.0
+-g
+-fembed-bitcode-marker
+-I/Users/criss/work/tisip/iphone/build/Release-iphoneos/include
+-I/Users/criss/Library/Application Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include
+-I/Users/criss/Library/Application Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiCore
+-I/Users/criss/Library/Application Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore
+-I/Users/criss/work/tisip/iphone/pjsip/src/pjlib/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/pjlib-util/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/pjnath/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/pjmedia/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/pjsip/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/third_party/resample/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/third_party/speex/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/third_party/srtp/crypto/include
+-I/Users/criss/work/tisip/iphone/pjsip/src/third_party/srtp/include
+-F/Users/criss/work/tisip/iphone/build/Release-iphoneos
+-DTI_POST_1_2
+aarch64-apple-darwin15.6.0
+"4.2.1 Compatible Apple LLVM 8.0.0 (clang-800.0.42.1)"
+SDK_PRODUCT_BUILD_VERSION=14B72
+14B72

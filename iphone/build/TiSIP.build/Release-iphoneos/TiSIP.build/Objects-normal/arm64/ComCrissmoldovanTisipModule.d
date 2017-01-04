@@ -1,34 +1,34 @@
 dependencies: \
   /Users/criss/work/tisip/iphone/Classes/ComCrissmoldovanTisipModule.m \
   /Users/criss/work/tisip/iphone/Classes/ComCrissmoldovanTisipModule.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiModule.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiProxy.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiEvaluator.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/KrollContext.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiToJS.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/TiCore.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/Ti.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/TiBase.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/TiContextRef.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/TiObjectRef.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/TiValueRef.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/WebKitAvailability.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/TiStringRef.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/JavaScriptCore/TiStringRefCF.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/KrollCallback.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/KrollObject.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiBindingRunLoop.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiBase.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/defines.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiThreading.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiPublicAPI.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiUtils.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiDimension.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiColor.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/WebFont.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiFile.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiBuffer.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiBlob.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiModule.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiProxy.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiEvaluator.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/KrollContext.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiToJS.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/TiCore.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/Ti.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/TiBase.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/TiContextRef.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/TiObjectRef.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/TiValueRef.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/WebKitAvailability.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/TiStringRef.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/JavaScriptCore/TiStringRefCF.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/KrollCallback.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/KrollObject.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiBindingRunLoop.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiBase.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/defines.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiThreading.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiPublicAPI.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiUtils.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiDimension.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiColor.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/WebFont.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiFile.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiBuffer.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiBlob.h \
   /Users/criss/work/tisip/iphone/Classes/PjSIPProxy.h \
   /Users/criss/work/tisip/iphone/Classes/PjSIPDispatch.h \
   /Users/criss/work/tisip/iphone/Classes/PJSIP.h \
@@ -237,21 +237,21 @@ dependencies: \
   /Users/criss/work/tisip/iphone/pjsip/src/pjsip/include/pjsip/sip_endpoint.h \
   /Users/criss/work/tisip/iphone/Classes/Util.h \
   /Users/criss/work/tisip/iphone/Classes/PJUtil.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiApp.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiHost.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/Bridge.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiStylesheet.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/KrollBridge.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/XHRBridge.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiRootViewController.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiControllerProtocols.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiViewProxy.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiUIView.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiAnimation.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiPoint.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/ListenerEntry.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/LayoutConstraint.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiGradient.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiRect.h \
-  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/5.0.0.GA/iphone/include/TiViewTemplate.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiApp.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiHost.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/Bridge.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiStylesheet.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/KrollBridge.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/XHRBridge.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiRootViewController.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiControllerProtocols.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiViewProxy.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiUIView.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiAnimation.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiPoint.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/ListenerEntry.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/LayoutConstraint.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiGradient.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiRect.h \
+  /Users/criss/Library/Application\ Support/Titanium/mobilesdk/osx/6.0.1.GA/iphone/include/TiViewTemplate.h \
   /Users/criss/work/tisip/iphone/Classes/PjSIPNotifications.h
