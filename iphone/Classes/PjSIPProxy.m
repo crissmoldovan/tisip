@@ -233,10 +233,10 @@
     
     cfg.cred_info[0] = credentials;
     
-    NSString *regUri = [NSString stringWithFormat:@"sip:%@;transport=tcp", sipDomain];
+    NSString *regUri = [NSString stringWithFormat:@"sip:%@;transport=udp", sipDomain];
     
     cfg.reg_uri = [PJUtil PJStringWithString: regUri];
-    cfg.transport_id = _transportIdTCP;
+    cfg.transport_id = _transportIdUDP;
     /* Enable IPv6 in media transport */
     //cfg.ipv6_media_use = PJSUA_IPV6_ENABLED;
     
